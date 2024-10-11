@@ -68,27 +68,54 @@ public:
   vec3 end;
   float thickness;
   int num_points;
+  float constraint;
   std::vector<vec3> points;
 
   int sides = 10;
 
-    Rope(vec3 playerPos, vec3 tetherPos, float thickness, int num_points)
-        : start(playerPos), end(tetherPos), thickness(thickness), num_points(num_points) {
-        points = std::vector<vec3>(num_points); // Initialize vector with num_points
-        init_points(num_points);
+    Rope(
+      vec3 playerPos,
+      vec3 tetherPos,
+      float thickness,
+      int num_points,
+      float constraint
+    ) : start(playerPos),
+        end(tetherPos),
+        thickness(thickness),
+        num_points(num_points),
+        constraint(constraint) {
+
+      points = std::vector<vec3>(num_points); // Initialize vector with num_points
+      init_points();
     }
 
-    void init_points(int num_points) {
+    void init_points() {
         for (int i = 0; i < num_points; ++i) {
             float t = static_cast<float>(i) / (num_points - 1); // Normalized factor
             points[i] = Vector3Lerp(start, end, t); // Calculate the position at t
         }
     }
 
+
   void update(vec3 playerPos, vec3 tetherPos) {
     start = playerPos;
     end = tetherPos;
-    init_points(num_points);
+    points[0] = start;
+    points[num_points - 1] = end;
+
+	for (int i=1; i<num_points-1; ++i) {
+		vec3 vec2prev = points[i] - points[i - 1];
+		vec3 vec2next = points[i + 1] - points[i];
+		float dist2prev = Vector3Length(vec2prev);
+		float dist2next = Vector3Length(vec2next);
+		if (dist2prev > constraint) {
+			vec2prev = Vector3Scale(Vector3Normalize(vec2prev), constraint);
+		}
+		if (dist2next > constraint) {
+			vec2next = Vector3Scale(Vector3Normalize(vec2next), constraint);
+		}
+		points[i] = (points[i-1] + vec2prev + points[i + 1] - vec2next) / 2;
+	}
   }
 
   void draw() {
@@ -119,7 +146,7 @@ public:
     // Constructor
     Player(vec3 startPos, float speed)
         : pos(startPos), targ(startPos), movementSpeed(speed),
-        tether(), rope(pos, targ, 0.3, 5), com(0.0, 0.0, 5.0) {
+        tether(), rope(pos, targ, 0.3, 5, 1.0f), com(0.0, 0.0, 5.0) {
         weight = 0.3f;
     }
 
