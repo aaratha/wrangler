@@ -11,6 +11,7 @@
 
 #include "raylib-cpp.hpp"
 #include <limits>
+#include <vector>
 
 namespace rl = raylib;  // Add this line after includes
 using vec3 = rl::Vector3;  // Add this line after namespace alias
@@ -55,6 +56,10 @@ public:
         // Lerp to the intersection point
         pos = lerp3D(pos, intersection, 0.6f);
     }
+
+  void draw() {
+    DrawCube(pos, 1.0f, 1.0f, 1.0f, BLUE);
+  }
 };
 
 class Rope {
@@ -62,26 +67,41 @@ public:
   vec3 start;
   vec3 end;
   float thickness;
+  int num_points;
+  std::vector<vec3> points;
 
   int sides = 10;
 
-  Rope(vec3 playerPos, vec3 tetherPos, float thickness)
-    : start(playerPos), end(tetherPos), thickness(thickness) {}
+    Rope(vec3 playerPos, vec3 tetherPos, float thickness, int num_points)
+        : start(playerPos), end(tetherPos), thickness(thickness), num_points(num_points) {
+        points = std::vector<vec3>(num_points); // Initialize vector with num_points
+        init_points(num_points);
+    }
+
+    void init_points(int num_points) {
+        for (int i = 0; i < num_points; ++i) {
+            float t = static_cast<float>(i) / (num_points - 1); // Normalized factor
+            points[i] = Vector3Lerp(start, end, t); // Calculate the position at t
+        }
+    }
 
   void update(vec3 playerPos, vec3 tetherPos) {
     start = playerPos;
     end = tetherPos;
+    init_points(num_points);
   }
 
   void draw() {
-    DrawCylinderEx(
-      start,
-      end,
-      thickness,
-      thickness,
-      sides,
-      RED
+    for (int i=0; i<num_points -1; i++) {
+      DrawCylinderEx(
+        points[i],
+        points[i+1],
+        thickness,
+        thickness-0.1,
+        sides,
+        RED
       ); // Draw a cylinder with base at startPos and top at endPos
+    }
   }
 
 };
@@ -99,7 +119,7 @@ public:
     // Constructor
     Player(vec3 startPos, float speed)
         : pos(startPos), targ(startPos), movementSpeed(speed),
-        tether(), rope(pos, targ, 0.3), com(0.0, 0.0, 5.0) {
+        tether(), rope(pos, targ, 0.3, 5), com(0.0, 0.0, 5.0) {
         weight = 0.3f;
     }
 
@@ -126,6 +146,12 @@ public:
 
     }
 
+  void draw() {
+    DrawCube(pos, 2.0f, 2.0f, 2.0f, RED);
+    DrawCubeWires(pos, 2.0f, 2.0f, 2.0f, MAROON);
+
+  }
+
 };
 
 
@@ -133,8 +159,8 @@ const float speed = 0.2;
 
 
 void update_camera(Camera3D& camera, Player player) {
-    camera.target.x = lerp_to(camera.target.x, player.com.x, 0.7f);
-    camera.target.z = lerp_to(camera.target.z, player.com.z, 0.7f);
+    camera.target.x = lerp_to(camera.target.x, player.com.x, 0.2f);
+    camera.target.z = lerp_to(camera.target.z, player.com.z, 0.2f);
     camera.target.y = 0.0f;
     //camera.position = lerp3D(camera.position, player.com + vec3{0.0, 15.0, 8.0}, 0.9);
     camera.position = player.pos + vec3{0.0, 15.0, 8.0};
@@ -192,10 +218,9 @@ int main(void) {
 
             BeginMode3D(camera);
 
-                DrawCube(player.pos, 2.0f, 2.0f, 2.0f, RED);
-                DrawCubeWires(player.pos, 2.0f, 2.0f, 2.0f, MAROON);
 
-                DrawCube(player.tether.pos, 1.0f, 1.0f, 1.0f, BLUE);
+                player.draw();
+                player.tether.draw();
 
                 // DrawSphere(player.com, 0.3f, BLUE); // com visualizer
 
