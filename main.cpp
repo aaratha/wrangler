@@ -11,7 +11,11 @@
 
 #include "raylib-cpp.hpp"
 
-raylib::Vector3 lerp_to(raylib::Vector3 position, raylib::Vector3 target, float rate) {
+float lerp_to(float position, float target, float rate) {
+  return position + (target - position) * rate;
+}
+
+raylib::Vector3 lerp3D(raylib::Vector3 position, raylib::Vector3 target, float rate) {
   return position + (target - position) * rate;
 }
 
@@ -42,7 +46,7 @@ public:
         }
 
         // Update the target for camera following
-        pos = lerp_to(pos, targ, 0.1);
+        pos = lerp3D(pos, targ, 0.1);
     }
 };
 
@@ -52,17 +56,27 @@ raylib::Vector3 Position = raylib::Vector3{0.0, 0.0, 0.0};
 raylib::Vector3 Target = Position;
 
 
+void update_camera(Camera3D& camera) {
+    float targetX = camera.target.x + GetMouseDelta().x * 0.5f;
+    float targetZ = camera.target.z + GetMouseDelta().y * 0.5f;
+
+    // Now lerp to those target positions
+    camera.target.x = lerp_to(camera.target.x, targetX, 0.02f);
+    camera.target.z = lerp_to(camera.target.z, targetZ, 0.02f);
+}
 
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
 int main(void) {
+  int width = GetScreenWidth();
+  int height = GetScreenHeight();
 
   Player player = Player(
-    raylib::Vector3{0.0,0.0,0.0},
+    raylib::Vector3{0.0,1.0,0.0},
     0.1);
 
-  const float rate = 0.4;
+    const float rate = 0.4;
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 1280;
@@ -72,27 +86,29 @@ int main(void) {
 
     // Define the camera to look into our 3d world
     Camera3D camera = { 0 };
-    camera.position = {0.0, 10.0, 10.0};  // Camera position
+    camera.position = {0.0, 15.0, 5.0};  // Camera position
     camera.target = raylib::Vector3{0.0, 10.0, 10.0};      // Camera looking at point
     camera.up = raylib::Vector3{ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
+    // cameraMode = CAMERA_THIRD_PERSON;
 
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetExitKey(KEY_NULL);
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
+    while (!WindowShouldClose()) {
         // Update
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
 
-      camera.target = lerp_to(camera.target, player.pos, 0.1);
-      camera.position = lerp_to(camera.position, player.pos + raylib::Vector3{0.0, 10.0, 10.0}, 0.1);
+      camera.target = lerp3D(camera.target, player.pos, 0.05);
+      camera.position = lerp3D(camera.position, player.pos + raylib::Vector3{0.0, 15.0, 8.0}, 0.1);
       player.Update();
+      update_camera(camera);
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -104,7 +120,7 @@ int main(void) {
                 DrawCube(player.pos, 2.0f, 2.0f, 2.0f, RED);
                 DrawCubeWires(player.pos, 2.0f, 2.0f, 2.0f, MAROON);
 
-                DrawGrid(10, 1.0f);
+                DrawGrid(20, 1.0f);
 
             EndMode3D();
 
@@ -115,6 +131,7 @@ int main(void) {
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
+
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
