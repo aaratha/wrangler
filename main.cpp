@@ -10,6 +10,7 @@
 ********************************************************************************************/
 
 #include "raylib-cpp.hpp"
+#include <limits>
 
 namespace rl = raylib;  // Add this line after includes
 using vec3 = rl::Vector3;  // Add this line after namespace alias
@@ -56,20 +57,50 @@ public:
     }
 };
 
+class Rope {
+public:
+  vec3 start;
+  vec3 end;
+  float thickness;
+
+  int sides = 10;
+
+  Rope(vec3 playerPos, vec3 tetherPos, float thickness)
+    : start(playerPos), end(tetherPos), thickness(thickness) {}
+
+  void update(vec3 playerPos, vec3 tetherPos) {
+    start = playerPos;
+    end = tetherPos;
+  }
+
+  void draw() {
+    DrawCylinderEx(
+      start,
+      end,
+      thickness,
+      thickness,
+      sides,
+      RED
+      ); // Draw a cylinder with base at startPos and top at endPos
+  }
+
+};
+
 class Player {
 public:
     vec3 pos;
     vec3 targ;
     float movementSpeed;
     Tether tether;
+    Rope rope;
     vec3 com;
     //Rope rope = Rope(pos, tether);
 
     // Constructor
     Player(vec3 startPos, float speed)
-        : pos(startPos), targ(startPos), movementSpeed(speed) {
-      tether = Tether();
-      com = vec3{0.0, 0.0, 5.0};
+        : pos(startPos), targ(startPos), movementSpeed(speed),
+        tether(), rope(pos, targ, 0.3), com(0.0, 0.0, 5.0) {
+        weight = 0.3f;
     }
 
     float weight = 0.3;
@@ -151,6 +182,7 @@ int main(void) {
 
       player.tether.update(camera);
       player.update();
+      player.rope.update(player.pos, player.tether.pos);
       update_camera(camera, player);
         // Draw
         //----------------------------------------------------------------------------------
@@ -168,6 +200,8 @@ int main(void) {
                 // DrawSphere(player.com, 0.3f, BLUE); // com visualizer
 
                 DrawGrid(20, 1.0f);
+
+                player.rope.draw();
 
             EndMode3D();
 
