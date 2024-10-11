@@ -11,58 +11,102 @@
 
 #include "raylib-cpp.hpp"
 
+namespace rl = raylib;  // Add this line after includes
+using vec3 = rl::Vector3;  // Add this line after namespace alias
+
+
 float lerp_to(float position, float target, float rate) {
   return position + (target - position) * rate;
 }
 
-raylib::Vector3 lerp3D(raylib::Vector3 position, raylib::Vector3 target, float rate) {
+vec3 lerp3D(vec3 position, vec3 target, float rate) {
   return position + (target - position) * rate;
 }
 
+class Tether {
+public:
+  vec3 pos;
+  vec3 targ;
+
+  Tether() {
+    pos = vec3{0.0, 0.0, 10.0};
+    targ = vec3{0.0, 0.0, 10.0};
+  }
+
+    void update(const Camera3D& camera) {
+        // Get mouse position
+        Vector2 mousePos = GetMousePosition();
+
+        // Get the ray from the mouse position
+        Ray ray = GetMouseRay(mousePos, camera);
+
+        // Calculate intersection with XZ plane (Y = 0)
+        // Using the formula: t = -plane.y / ray.direction.y
+        float t = -ray.position.y / ray.direction.y;
+
+        // Get the intersection point
+        vec3 intersection = {
+            ray.position.x + ray.direction.x * t,
+            0.0f,  // We're projecting onto XZ plane, so y = 0
+            ray.position.z + ray.direction.z * t
+        };
+
+        // Lerp to the intersection point
+        pos = lerp3D(pos, intersection, 0.6f);
+    }
+};
+
 class Player {
 public:
-    raylib::Vector3 pos;
-    raylib::Vector3 targ;
+    vec3 pos;
+    vec3 targ;
     float movementSpeed;
+    Tether tether;
+    vec3 com;
+    //Rope rope = Rope(pos, tether);
 
     // Constructor
-    Player(raylib::Vector3 startPos, float speed)
+    Player(vec3 startPos, float speed)
         : pos(startPos), targ(startPos), movementSpeed(speed) {
+      tether = Tether();
+      com = vec3{0.0, 0.0, 5.0};
     }
+
+    float weight = 0.3;
 
     // Method to handle input and move the player
-    void Update() {
+    void update() {
         if (IsKeyDown(KEY_W)) {
-            targ += raylib::Vector3(0.0f, 0.0f, -movementSpeed);  // Move forward
+            targ += vec3(0.0f, 0.0f, -movementSpeed);  // Move forward
         }
         if (IsKeyDown(KEY_S)) {
-            targ += raylib::Vector3(0.0f, 0.0f, movementSpeed);   // Move backward
+            targ += vec3(0.0f, 0.0f, movementSpeed);   // Move backward
         }
         if (IsKeyDown(KEY_A)) {
-            targ += raylib::Vector3(-movementSpeed, 0.0f, 0.0f);  // Move left
+            targ += vec3(-movementSpeed, 0.0f, 0.0f);  // Move left
         }
         if (IsKeyDown(KEY_D)) {
-            targ += raylib::Vector3(movementSpeed, 0.0f, 0.0f);   // Move right
+            targ += vec3(movementSpeed, 0.0f, 0.0f);   // Move right
         }
 
-        // Update the target for camera following
-        pos = lerp3D(pos, targ, 0.1);
+        pos = lerp3D(pos, targ, 0.4);
+
+        com = Vector3Add(Vector3Scale(pos, 1.0f - weight), Vector3Scale(tether.pos, weight));
+
     }
+
 };
 
 
 const float speed = 0.2;
-raylib::Vector3 Position = raylib::Vector3{0.0, 0.0, 0.0};
-raylib::Vector3 Target = Position;
 
 
-void update_camera(Camera3D& camera) {
-    float targetX = camera.target.x + GetMouseDelta().x * 0.5f;
-    float targetZ = camera.target.z + GetMouseDelta().y * 0.5f;
-
-    // Now lerp to those target positions
-    camera.target.x = lerp_to(camera.target.x, targetX, 0.02f);
-    camera.target.z = lerp_to(camera.target.z, targetZ, 0.02f);
+void update_camera(Camera3D& camera, Player player) {
+    camera.target.x = lerp_to(camera.target.x, player.com.x, 0.7f);
+    camera.target.z = lerp_to(camera.target.z, player.com.z, 0.7f);
+    camera.target.y = 0.0f;
+    //camera.position = lerp3D(camera.position, player.com + vec3{0.0, 15.0, 8.0}, 0.9);
+    camera.position = player.pos + vec3{0.0, 15.0, 8.0};
 }
 
 //------------------------------------------------------------------------------------
@@ -73,7 +117,7 @@ int main(void) {
   int height = GetScreenHeight();
 
   Player player = Player(
-    raylib::Vector3{0.0,1.0,0.0},
+    vec3{0.0,0.0,0.0},
     0.1);
 
     const float rate = 0.4;
@@ -87,14 +131,14 @@ int main(void) {
     // Define the camera to look into our 3d world
     Camera3D camera = { 0 };
     camera.position = {0.0, 15.0, 5.0};  // Camera position
-    camera.target = raylib::Vector3{0.0, 10.0, 10.0};      // Camera looking at point
-    camera.up = raylib::Vector3{ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+    camera.target = vec3{0.0, 10.0, 10.0};      // Camera looking at point
+    camera.up = vec3{ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
     // cameraMode = CAMERA_THIRD_PERSON;
 
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(70);               // Set our game to run at 60 frames-per-second
     SetExitKey(KEY_NULL);
     //--------------------------------------------------------------------------------------
 
@@ -105,10 +149,9 @@ int main(void) {
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
 
-      camera.target = lerp3D(camera.target, player.pos, 0.05);
-      camera.position = lerp3D(camera.position, player.pos + raylib::Vector3{0.0, 15.0, 8.0}, 0.1);
-      player.Update();
-      update_camera(camera);
+      player.tether.update(camera);
+      player.update();
+      update_camera(camera, player);
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -119,6 +162,10 @@ int main(void) {
 
                 DrawCube(player.pos, 2.0f, 2.0f, 2.0f, RED);
                 DrawCubeWires(player.pos, 2.0f, 2.0f, 2.0f, MAROON);
+
+                DrawCube(player.tether.pos, 1.0f, 1.0f, 1.0f, BLUE);
+
+                // DrawSphere(player.com, 0.3f, BLUE); // com visualizer
 
                 DrawGrid(20, 1.0f);
 
