@@ -17,6 +17,9 @@ namespace rl = raylib;  // Add this line after includes
 using vec3 = rl::Vector3;  // Add this line after namespace alias
 
 
+const float speed = 0.2;
+const vec3 CAMERA_OFFSET = {0.0, 15.0, 8.0};
+
 float lerp_to(float position, float target, float rate) {
   return position + (target - position) * rate;
 }
@@ -54,7 +57,7 @@ public:
         };
 
         // Lerp to the intersection point
-        pos = lerp3D(pos, intersection, 0.6f);
+        pos = lerp3D(pos, intersection, 0.3f);
     }
 
   void draw() {
@@ -124,7 +127,7 @@ public:
         points[i],
         points[i+1],
         thickness,
-        thickness-0.1,
+        thickness,
         sides,
         RED
       ); // Draw a cylinder with base at startPos and top at endPos
@@ -146,7 +149,7 @@ public:
     // Constructor
     Player(vec3 startPos, float speed)
         : pos(startPos), targ(startPos), movementSpeed(speed),
-        tether(), rope(pos, targ, 0.3, 5, 1.0f), com(0.0, 0.0, 5.0) {
+        tether(), rope(pos, targ, 0.1, 15, 0.1f), com(0.0, 0.0, 5.0) {
         weight = 0.3f;
     }
 
@@ -182,7 +185,6 @@ public:
 };
 
 
-const float speed = 0.2;
 
 
 void update_camera(Camera3D& camera, Player player) {
@@ -190,7 +192,10 @@ void update_camera(Camera3D& camera, Player player) {
     camera.target.z = lerp_to(camera.target.z, player.com.z, 0.2f);
     camera.target.y = 0.0f;
     //camera.position = lerp3D(camera.position, player.com + vec3{0.0, 15.0, 8.0}, 0.9);
-    camera.position = player.pos + vec3{0.0, 15.0, 8.0};
+    camera.position = player.pos + CAMERA_OFFSET;
+
+    camera.fovy += GetMouseWheelMove();
+    camera.fovy = Clamp(camera.fovy, 20.0f, 100.0f);
 }
 
 //------------------------------------------------------------------------------------
@@ -214,10 +219,10 @@ int main(void) {
 
     // Define the camera to look into our 3d world
     Camera3D camera = { 0 };
-    camera.position = {0.0, 15.0, 5.0};  // Camera position
+    camera.position = CAMERA_OFFSET;  // Camera position
     camera.target = vec3{0.0, 10.0, 10.0};      // Camera looking at point
     camera.up = vec3{ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-    camera.fovy = 45.0f;                                // Camera field-of-view Y
+    camera.fovy = 60.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
     // cameraMode = CAMERA_THIRD_PERSON;
 
