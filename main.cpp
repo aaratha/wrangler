@@ -1,14 +1,3 @@
-/*******************************************************************************************
-*
-*   raylib [shapes] example - collision area
-*
-*   This example has been created using raylib 2.5 (www.raylib.com)
-*   raylib is licensed under an unmodified zlib/libpng license (View raylib.h for details)
-*
-*   Copyright (c) 2013-2019 Ramon Santamaria (@raysan5)
-*
-********************************************************************************************/
-
 #include "raylib-cpp.hpp"
 #include "raymath.h"
 #include <limits>
@@ -49,7 +38,7 @@ public:
     pos = vec3{0.0, 1.0, 10.0};
     targ = vec3{0.0, 0.0, 10.0};
 
-    tetherModel = LoadModelFromMesh(GenMeshSphere(1.0, 20, 20));
+    tetherModel = LoadModelFromMesh(GenMeshSphere(0.5, 20, 20));
     tetherModel.materials[0].shader = shader;
   }
 
@@ -207,13 +196,47 @@ public:
 };
 
 
-void load_grass_mesh() {
-      // Load PBR shader
+class Animal {
+public:
+    vec3 pos;
+    vec3 targ;
+    float speed;
+    Shader shader;
+    Model model;
 
-    // Load textures for PBR material (you can have albedo, normal, roughness, AO, etc.)
-                 // Apply the PBR material
+    Animal(vec3 pos, float speed, Shader shader) :
+        pos(pos), speed(speed), shader(shader)
+    {
+        targ = pos;
+        model = LoadModelFromMesh(GenMeshSphere(0.5, 20, 20));
+        model.materials[0].shader = shader;
+    }
 
-}
+    void setNewRandomTarget() {
+        // Define the range for random movement (e.g., [-1.0, 1.0])
+        float rangep = 0.2f;
+
+        // Generate a random value within the range for both x and z coordinates
+        float rangeX = ((float)GetRandomValue(-1000, 1000) / 1000.0f) * rangep;
+        float rangeZ = ((float)GetRandomValue(-1000, 1000) / 1000.0f) * rangep;
+
+        // Update the target position with the new random values
+        targ.x = targ.x + rangeX;
+        targ.z = targ.z + rangeZ;
+    }
+
+    void update() {
+        setNewRandomTarget();
+        pos = lerp3D(pos, targ, 0.3);
+
+        model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
+    }
+
+    void draw() {
+        DrawModel(model, Vector3Zero(), 1.0f, YELLOW);
+    }
+};
+
 
 void update_camera(Camera3D& camera, Player player) {
     camera.target.x = lerp_to(camera.target.x, player.com.x, 0.2f);
@@ -253,38 +276,6 @@ int main(void) {
     // cameraMode = CAMERA_THIRD_PERSON;
 
 // Load textures
-    /*
-    Texture2D albedoTexture = LoadTexture("resources/materials/grass/albedo.png");
-    Texture2D normalTexture = LoadTexture("resources/materials/grass/normal-ogl.png");
-    Image heightImage = LoadImage("resources/materials/grass/height.png");
-    Texture2D heightTexture = LoadTextureFromImage(heightImage);  // Convert image to texture (VRAM)
-
-    // Set texture wrap mode to REPEAT
-    SetTextureWrap(albedoTexture, TEXTURE_WRAP_REPEAT);
-    SetTextureWrap(normalTexture, TEXTURE_WRAP_REPEAT);
-
-    // Create a PBR material and assign the textures
-    Material material = LoadMaterialDefault();  // Initialize default material
-    material.maps[MATERIAL_MAP_ALBEDO].texture = albedoTexture;    // Base color texture
-    material.maps[MATERIAL_MAP_NORMAL].texture = normalTexture;    // Normal map
-
-    // Create a plane mesh to act as the floor
-    float scale = 20;
-    float density = 40;
-    Mesh floorMesh = GenMeshHeightmap(heightImage, (Vector3){ scale, 2, scale });  // Create a plane mesh
-
-    // Adjust UV scaling to repeat the texture over the mesh
-    for (int i = 0; i < floorMesh.vertexCount; i++)
-    {
-        floorMesh.texcoords[i * 2] *= density;      // Scale the U coordinate by 5
-        floorMesh.texcoords[i * 2 + 1] *= density;  // Scale the V coordinate by 5
-    }
-
-    // Load the model and apply the material
-    Model floorModel = LoadModelFromMesh(floorMesh);  // Create a model from the mesh
-    floorModel.materials[0] = material;               // Assign the material
-    */
-
     // After initializing the camera
 
     rl::Shader shader (TextFormat("resources/shaders/lighting.vs", GLSL_VERSION),
@@ -316,9 +307,10 @@ int main(void) {
         0.1,
         shader);
 
+    Animal animal = Animal({10.0, 0.5, 10.0}, 5.0, shader);
 
 
-    Model planeModel = LoadModelFromMesh(GenMeshPlane(30.0, 30.0, 2, 2));
+    Model planeModel = LoadModelFromMesh(GenMeshPlane(50.0, 50.0, 2, 2));
     planeModel.materials[0].shader = shader;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
@@ -335,6 +327,7 @@ int main(void) {
       player.tether.update(camera);
       player.update();
       player.rope.update(player.pos, player.tether.pos);
+      animal.update();
       update_camera(camera, player);
 
       std::array<float, 3> cameraPos = { camera.position.x, camera.position.y, camera.position.z };
@@ -350,10 +343,9 @@ int main(void) {
             BeginShaderMode(shader);
 
             // Update light values (ensure this is called in the main game loop)
-
-
                 player.draw();
                 player.tether.draw();
+                animal.draw();
 
                 DrawModel(planeModel, Vector3Zero(), 1.0f, (Color){56, 186, 95, 255});
                 // DrawSphere(player.com, 0.3f, BLUE); // com visualizer
@@ -361,16 +353,9 @@ int main(void) {
                 // DrawGrid(20, 1.0f);
                 //DrawModel(floorModel, (Vector3){ 0.0f, -1.0f, 0.0f }, 1.0f, WHITE);
 
-
-
                 player.rope.draw();
 
             EndShaderMode();
-            for (int i = 0; i < MAX_LIGHTS; i++)
-                {
-                    if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
-                    else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));
-                }
             EndMode3D();
 
             DrawText("Welcome to the third dimension!", 10, 40, 20, DARKGRAY);
