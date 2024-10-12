@@ -1,4 +1,4 @@
-# rangler
+# wrangler
 
 Small 2D game written in C++ using RayLib for basic graphics.
 
