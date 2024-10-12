@@ -246,7 +246,12 @@ void update_camera(Camera3D& camera, Player player) {
     //camera.position = lerp3D(camera.position, player.com + vec3{0.0, 15.0, 8.0}, 0.9);
     camera.position = player.pos + CAMERA_OFFSET;
 
-    camera.fovy += GetMouseWheelMove();
+    #if defined(_WIN32) || defined(_WIN64)
+        camera.fovy -= 3*GetMouseWheelMove();
+    #else
+        camera.fovy -= GetMouseWheelMove();
+    #endif
+    camera.fovy = Clamp(camera.fovy, 20.0f, 100.0f);
     camera.fovy = Clamp(camera.fovy, 20.0f, 100.0f);
 }
 
