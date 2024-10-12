@@ -1,5 +1,12 @@
 #!/usr/bin/env sh
 
-cmake . -B build
+# Check for the OS type
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    # Windows with MinGW
+    cmake . -B build -G "MinGW Makefiles"
+else
+    # Unix-based system (macOS/Linux)
+    cmake . -B build -G
+fi
 cmake --build build
 build/wrangler

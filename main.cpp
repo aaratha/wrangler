@@ -2,6 +2,7 @@
 #include "raymath.h"
 #include <limits>
 #include <vector>
+#include <array>
 
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"

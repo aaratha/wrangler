@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
 project(wrangler)
 
+set(CMAKE_CXX_STANDARD 17)
+
+
 # raylib
 find_package(raylib QUIET)
 if (NOT raylib_FOUND)
