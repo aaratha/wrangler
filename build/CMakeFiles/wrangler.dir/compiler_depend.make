@@ -892,8 +892,11 @@ CMakeFiles/wrangler.dir/main.cpp.o: /Users/aaratha/projects/wrangler/main.cpp \
   _deps/raylib_cpp-src/include/raylib.hpp \
   _deps/raylib_cpp-src/include/raymath.hpp \
   _deps/raylib_cpp-src/include/Texture.hpp \
-  _deps/raylib_cpp-src/include/raylib-cpp.hpp
+  _deps/raylib_cpp-src/include/raylib-cpp.hpp \
+  /Users/aaratha/projects/wrangler/rlights.h
 
+
+/Users/aaratha/projects/wrangler/rlights.h:
 
 _deps/raylib_cpp-src/include/raylib-cpp.hpp:
 

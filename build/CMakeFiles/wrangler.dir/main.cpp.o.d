@@ -890,4 +890,5 @@ CMakeFiles/wrangler.dir/main.cpp.o: \
   /Users/aaratha/projects/wrangler/build/_deps/raylib_cpp-src/include/./Touch.hpp \
   /Users/aaratha/projects/wrangler/build/_deps/raylib_cpp-src/include/./VrStereoConfig.hpp \
   /Users/aaratha/projects/wrangler/build/_deps/raylib_cpp-src/include/./Wave.hpp \
-  /Users/aaratha/projects/wrangler/build/_deps/raylib_cpp-src/include/./Window.hpp
+  /Users/aaratha/projects/wrangler/build/_deps/raylib_cpp-src/include/./Window.hpp \
+  /Users/aaratha/projects/wrangler/rlights.h

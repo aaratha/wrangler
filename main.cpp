@@ -10,8 +10,18 @@
 ********************************************************************************************/
 
 #include "raylib-cpp.hpp"
+#include "raymath.h"
 #include <limits>
 #include <vector>
+
+#define RLIGHTS_IMPLEMENTATION
+#include "rlights.h"
+
+#if defined(PLATFORM_DESKTOP)
+    #define GLSL_VERSION            330
+#else   // PLATFORM_ANDROID, PLATFORM_WEB
+    #define GLSL_VERSION            100
+#endif
 
 namespace rl = raylib;  // Add this line after includes
 using vec3 = rl::Vector3;  // Add this line after namespace alias
@@ -32,10 +42,15 @@ class Tether {
 public:
   vec3 pos;
   vec3 targ;
+  Shader shader;
+  Model tetherModel;
 
-  Tether() {
-    pos = vec3{0.0, 0.0, 10.0};
+  Tether(Shader shader) : shader(shader) {
+    pos = vec3{0.0, 1.0, 10.0};
     targ = vec3{0.0, 0.0, 10.0};
+
+    tetherModel = LoadModelFromMesh(GenMeshSphere(1.0, 20, 20));
+    tetherModel.materials[0].shader = shader;
   }
 
     void update(const Camera3D& camera) {
@@ -52,16 +67,17 @@ public:
         // Get the intersection point
         vec3 intersection = {
             ray.position.x + ray.direction.x * t,
-            0.0f,  // We're projecting onto XZ plane, so y = 0
+            1.0f,  // We're projecting onto XZ plane, so y = 0
             ray.position.z + ray.direction.z * t
         };
 
         // Lerp to the intersection point
         pos = lerp3D(pos, intersection, 0.3f);
+        tetherModel.transform = MatrixTranslate(pos.x, pos.y, pos.z);
     }
 
   void draw() {
-    DrawCube(pos, 1.0f, 1.0f, 1.0f, BLUE);
+    DrawModel(tetherModel, Vector3Zero(), 1.0f, BLUE);
   }
 };
 
@@ -144,13 +160,18 @@ public:
     Tether tether;
     Rope rope;
     vec3 com;
+    Shader shader;
+    Model playerModel;
     //Rope rope = Rope(pos, tether);
 
     // Constructor
-    Player(vec3 startPos, float speed)
+    Player(vec3 startPos, float speed, Shader shader)
         : pos(startPos), targ(startPos), movementSpeed(speed),
-        tether(), rope(pos, targ, 0.1, 15, 0.1f), com(0.0, 0.0, 5.0) {
+        tether(shader), rope(pos, targ, 0.1, 15, 0.1f), com(0.0, 0.0, 5.0), shader(shader) {
+
         weight = 0.3f;
+        playerModel = LoadModelFromMesh(GenMeshCube(2.0, 2.0, 2.0));
+        playerModel.materials[0].shader = shader;
     }
 
     float weight = 0.3;
@@ -172,20 +193,27 @@ public:
 
         pos = lerp3D(pos, targ, 0.4);
 
+        playerModel.transform = MatrixTranslate(pos.x, pos.y, pos.z);
+
         com = Vector3Add(Vector3Scale(pos, 1.0f - weight), Vector3Scale(tether.pos, weight));
 
     }
 
-  void draw() {
-    DrawCube(pos, 2.0f, 2.0f, 2.0f, RED);
-    DrawCubeWires(pos, 2.0f, 2.0f, 2.0f, MAROON);
-
-  }
+    void draw() {
+        // Draw the cube with WHITE as base color (shader will modify it)
+        DrawModel(playerModel, Vector3Zero(), 1.0f, RED);
+    }
 
 };
 
 
+void load_grass_mesh() {
+      // Load PBR shader
 
+    // Load textures for PBR material (you can have albedo, normal, roughness, AO, etc.)
+                 // Apply the PBR material
+
+}
 
 void update_camera(Camera3D& camera, Player player) {
     camera.target.x = lerp_to(camera.target.x, player.com.x, 0.2f);
@@ -205,9 +233,6 @@ int main(void) {
   int width = GetScreenWidth();
   int height = GetScreenHeight();
 
-  Player player = Player(
-    vec3{0.0,0.0,0.0},
-    0.1);
 
     const float rate = 0.4;
     // Initialization
@@ -215,6 +240,7 @@ int main(void) {
     const int screenWidth = 1280;
     const int screenHeight = 720;
 
+    SetConfigFlags(FLAG_MSAA_4X_HINT);  // Enable Multi Sampling Anti Aliasing 4x (if available)
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera mode");
 
     // Define the camera to look into our 3d world
@@ -226,8 +252,76 @@ int main(void) {
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
     // cameraMode = CAMERA_THIRD_PERSON;
 
+// Load textures
+    /*
+    Texture2D albedoTexture = LoadTexture("resources/materials/grass/albedo.png");
+    Texture2D normalTexture = LoadTexture("resources/materials/grass/normal-ogl.png");
+    Image heightImage = LoadImage("resources/materials/grass/height.png");
+    Texture2D heightTexture = LoadTextureFromImage(heightImage);  // Convert image to texture (VRAM)
 
-    SetTargetFPS(70);               // Set our game to run at 60 frames-per-second
+    // Set texture wrap mode to REPEAT
+    SetTextureWrap(albedoTexture, TEXTURE_WRAP_REPEAT);
+    SetTextureWrap(normalTexture, TEXTURE_WRAP_REPEAT);
+
+    // Create a PBR material and assign the textures
+    Material material = LoadMaterialDefault();  // Initialize default material
+    material.maps[MATERIAL_MAP_ALBEDO].texture = albedoTexture;    // Base color texture
+    material.maps[MATERIAL_MAP_NORMAL].texture = normalTexture;    // Normal map
+
+    // Create a plane mesh to act as the floor
+    float scale = 20;
+    float density = 40;
+    Mesh floorMesh = GenMeshHeightmap(heightImage, (Vector3){ scale, 2, scale });  // Create a plane mesh
+
+    // Adjust UV scaling to repeat the texture over the mesh
+    for (int i = 0; i < floorMesh.vertexCount; i++)
+    {
+        floorMesh.texcoords[i * 2] *= density;      // Scale the U coordinate by 5
+        floorMesh.texcoords[i * 2 + 1] *= density;  // Scale the V coordinate by 5
+    }
+
+    // Load the model and apply the material
+    Model floorModel = LoadModelFromMesh(floorMesh);  // Create a model from the mesh
+    floorModel.materials[0] = material;               // Assign the material
+    */
+
+    // After initializing the camera
+
+    rl::Shader shader (TextFormat("resources/shaders/lighting.vs", GLSL_VERSION),
+                       TextFormat("resources/shaders/lighting.fs", GLSL_VERSION));
+    // Get some required shader locations
+    shader.locs[SHADER_LOC_VECTOR_VIEW] = shader.GetLocation("viewPos");
+    // NOTE: "matModel" location name is automatically assigned on shader loading,
+    // no need to get the location again if using that uniform name
+    //shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
+
+    // Ambient light level (some basic lighting)
+    int ambientLoc = shader.GetLocation("ambient");
+    std::array<float, 4> ambientValues = {0.9f, 0.9f, 0.9f, 1.0f};
+    shader.SetValue(ambientLoc, ambientValues.data(), SHADER_UNIFORM_VEC4);
+
+    // Create lights
+    std::array<Light, MAX_LIGHTS> lights = {
+        CreateLight(LIGHT_POINT, (Vector3) {
+            -10, 40, 10},
+            Vector3Zero(),
+            (Color){255, 250, 189, 255},
+            shader
+        ),
+    };
+
+
+    Player player = Player(
+        vec3{0.0,1.0,0.0},
+        0.1,
+        shader);
+
+
+
+    Model planeModel = LoadModelFromMesh(GenMeshPlane(30.0, 30.0, 2, 2));
+    planeModel.materials[0].shader = shader;
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     SetExitKey(KEY_NULL);
     //--------------------------------------------------------------------------------------
 
@@ -242,6 +336,10 @@ int main(void) {
       player.update();
       player.rope.update(player.pos, player.tether.pos);
       update_camera(camera, player);
+
+      std::array<float, 3> cameraPos = { camera.position.x, camera.position.y, camera.position.z };
+        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos.data(), SHADER_UNIFORM_VEC3);
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -249,17 +347,30 @@ int main(void) {
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
+            BeginShaderMode(shader);
+
+            // Update light values (ensure this is called in the main game loop)
 
 
                 player.draw();
                 player.tether.draw();
 
+                DrawModel(planeModel, Vector3Zero(), 1.0f, (Color){56, 186, 95, 255});
                 // DrawSphere(player.com, 0.3f, BLUE); // com visualizer
 
-                DrawGrid(20, 1.0f);
+                // DrawGrid(20, 1.0f);
+                //DrawModel(floorModel, (Vector3){ 0.0f, -1.0f, 0.0f }, 1.0f, WHITE);
+
+
 
                 player.rope.draw();
 
+            EndShaderMode();
+            for (int i = 0; i < MAX_LIGHTS; i++)
+                {
+                    if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
+                    else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));
+                }
             EndMode3D();
 
             DrawText("Welcome to the third dimension!", 10, 40, 20, DARKGRAY);
@@ -272,6 +383,7 @@ int main(void) {
 
 
     // De-Initialization
+    UnloadShader(shader);   // Unload shader
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
