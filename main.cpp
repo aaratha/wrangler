@@ -84,6 +84,9 @@ public:
   int num_points;
   float constraint;
   std::vector<vec3> points;
+  std::vector<vec3> velocities;  // MAX_POINTS should be the number of points in the rope
+  float friction = 0.98f;  // Friction factor (close to 1.0 means low friction, close to 0 means high friction)
+
 
   int sides = 10;
 
@@ -100,6 +103,7 @@ public:
         constraint(constraint) {
 
       points = std::vector<vec3>(num_points); // Initialize vector with num_points
+      velocities = std::vector<vec3>(num_points);
       init_points();
     }
 
@@ -111,26 +115,42 @@ public:
     }
 
 
-  void update(vec3 playerPos, vec3 tetherPos) {
-    start = playerPos;
-    end = tetherPos;
-    points[0] = start;
-    points[num_points - 1] = end;
+    void update(vec3 playerPos, vec3 tetherPos) {
+        start = playerPos;
+        end = tetherPos;
+        points[0] = start;
+        points[num_points - 1] = end;
 
-	for (int i=1; i<num_points-1; ++i) {
-		vec3 vec2prev = points[i] - points[i - 1];
-		vec3 vec2next = points[i + 1] - points[i];
-		float dist2prev = Vector3Length(vec2prev);
-		float dist2next = Vector3Length(vec2next);
-		if (dist2prev > constraint) {
-			vec2prev = Vector3Scale(Vector3Normalize(vec2prev), constraint);
-		}
-		if (dist2next > constraint) {
-			vec2next = Vector3Scale(Vector3Normalize(vec2next), constraint);
-		}
-		points[i] = (points[i-1] + vec2prev + points[i + 1] - vec2next) / 2;
-	}
-  }
+        for (int i = 1; i < num_points - 1; ++i) {
+            // Calculate the position difference from neighboring points
+            vec3 vec2prev = points[i] - points[i - 1];
+            vec3 vec2next = points[i + 1] - points[i];
+            float dist2prev = Vector3Length(vec2prev);
+            float dist2next = Vector3Length(vec2next);
+
+            // Constrain distances
+            if (dist2prev > constraint) {
+                vec2prev = Vector3Scale(Vector3Normalize(vec2prev), constraint);
+            }
+            if (dist2next > constraint) {
+                vec2next = Vector3Scale(Vector3Normalize(vec2next), constraint);
+            }
+
+            // Calculate the velocity based on the current and next position
+            vec3 newPos = (points[i - 1] + vec2prev + points[i + 1] - vec2next) / 2;
+            vec3 velocity = newPos - points[i];
+
+            // Apply friction to the velocity
+            velocity = Vector3Scale(velocity, friction);
+
+            // Update the point's position using the velocity
+            points[i] = points[i] + velocity;
+
+            // Optionally, store this velocity for the next update if needed
+            velocities[i] = velocity;
+        }
+    }
+
 
   void draw() {
     for (int i=0; i<num_points -1; i++) {
@@ -162,37 +182,51 @@ public:
     // Constructor
     Player(vec3 startPos, float speed, Shader shader)
         : pos(startPos), targ(startPos), movementSpeed(speed),
-        tether(shader), rope(pos, targ, 0.1, 15, 0.1f), com(0.0, 0.0, 5.0), shader(shader) {
+        tether(shader), rope(pos, targ, 0.1, 15, 0.05f), com(0.0, 0.0, 5.0), shader(shader) {
 
         weight = 0.3f;
         playerModel = LoadModelFromMesh(GenMeshCube(2.0, 2.0, 2.0));
         playerModel.materials[0].shader = shader;
     }
 
-    float weight = 0.3;
+    float weight = 0.1;
 
     // Method to handle input and move the player
     void update() {
+        vec3 direction = vec3(0.0f, 0.0f, 0.0f);  // Movement direction
+
         if (IsKeyDown(KEY_W)) {
-            targ += vec3(0.0f, 0.0f, -movementSpeed);  // Move forward
+            direction += vec3(0.0f, 0.0f, -1.0f);  // Move forward
         }
         if (IsKeyDown(KEY_S)) {
-            targ += vec3(0.0f, 0.0f, movementSpeed);   // Move backward
+            direction += vec3(0.0f, 0.0f, 1.0f);   // Move backward
         }
         if (IsKeyDown(KEY_A)) {
-            targ += vec3(-movementSpeed, 0.0f, 0.0f);  // Move left
+            direction += vec3(-1.0f, 0.0f, 0.0f);  // Move left
         }
         if (IsKeyDown(KEY_D)) {
-            targ += vec3(movementSpeed, 0.0f, 0.0f);   // Move right
+            direction += vec3(1.0f, 0.0f, 0.0f);   // Move right
         }
 
+        // Normalize direction if it's non-zero to prevent diagonal speed boost
+        if (Vector3Length(direction) > 0.0f) {
+            direction = Vector3Normalize(direction);
+        }
+
+        // Apply movement speed
+        targ += direction * movementSpeed;
+
+        // Interpolate position smoothly
         pos = lerp3D(pos, targ, 0.4);
 
+        // Update player model transformation
         playerModel.transform = MatrixTranslate(pos.x, pos.y, pos.z);
 
+        // Update center of mass (com)
         com = Vector3Add(Vector3Scale(pos, 1.0f - weight), Vector3Scale(tether.pos, weight));
 
     }
+
 
     void draw() {
         // Draw the cube with WHITE as base color (shader will modify it)
@@ -302,6 +336,7 @@ void update_camera(Camera3D& camera, Player player) {
     camera.target.y = 0.0f;
     //camera.position = lerp3D(camera.position, player.com + vec3{0.0, 15.0, 8.0}, 0.9);
     camera.position = player.pos + CAMERA_OFFSET;
+    camera.position.x = player.com.x + CAMERA_OFFSET.x;
 
     #if defined(_WIN32) || defined(_WIN64)
         camera.fovy -= 3*GetMouseWheelMove();
@@ -355,7 +390,7 @@ void handle_collisions(Player& player, std::vector<Animal>& animals) {
                 vec3 closestPoint = GetClosestPointOnLineFromPoint(animal.pos, player.rope.points[i], player.rope.points[i+1]);
                 vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animal.pos, closestPoint));
                 float overlap = ropeSegmentRadius + animalRadius - Vector3Distance(closestPoint, animal.pos);
-                animal.targ = Vector3Add(animal.targ, Vector3Scale(collisionNormal, overlap));
+                animal.targ = Vector3Add(animal.targ, Vector3Scale(collisionNormal, overlap*0.8));
             }
         }
     }
@@ -441,7 +476,7 @@ int main(void) {
 
     Player player = Player(
         vec3{0.0,1.0,0.0},
-        0.1,
+        0.2,
         shader);
 
     std::vector<Animal> animals;
