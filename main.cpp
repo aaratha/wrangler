@@ -1,5 +1,6 @@
 #include "raylib-cpp.hpp"
 #include "raymath.h"
+#include "rlgl.h"
 #include <random>
 #include <limits>
 #include <vector>
@@ -14,8 +15,16 @@
     #define GLSL_VERSION            100
 #endif
 
+#define SHADOWMAP_RESOLUTION 2048
+
+
 namespace rl = raylib;  // Add this line after includes
 using vec3 = rl::Vector3;  // Add this line after namespace alias
+
+
+RenderTexture2D LoadShadowmapRenderTexture(int width, int height);
+void UnloadShadowmapRenderTexture(RenderTexture2D target);
+void DrawScene(Model cube, Model robot);
 
 
 const float speed = 0.2;
@@ -38,14 +47,14 @@ public:
   vec3 pos;
   vec3 targ;
   Shader shader;
-  Model tetherModel;
+  Model model;
 
   Tether(Shader shader) : shader(shader) {
     pos = vec3{0.0, 1.0, 10.0};
     targ = vec3{0.0, 0.0, 10.0};
 
-    tetherModel = LoadModelFromMesh(GenMeshSphere(0.5, 20, 20));
-    tetherModel.materials[0].shader = shader;
+    model = LoadModelFromMesh(GenMeshSphere(0.5, 20, 20));
+    model.materials[0].shader = shader;
   }
 
     void update(const Camera3D& camera) {
@@ -68,11 +77,11 @@ public:
 
         // Lerp to the intersection point
         pos = lerp3D(pos, intersection, 0.3f);
-        tetherModel.transform = MatrixTranslate(pos.x, pos.y, pos.z);
+        model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
     }
 
   void draw() {
-    DrawModel(tetherModel, Vector3Zero(), 1.0f, BLUE);
+    DrawModel(model, Vector3Zero(), 1.0f, BLUE);
   }
 };
 
@@ -176,7 +185,7 @@ public:
     Rope rope;
     vec3 com;
     Shader shader;
-    Model playerModel;
+    Model model;
     //Rope rope = Rope(pos, tether);
 
     // Constructor
@@ -185,8 +194,8 @@ public:
         tether(shader), rope(pos, targ, 0.1, 15, 0.05f), com(0.0, 0.0, 5.0), shader(shader) {
 
         weight = 0.3f;
-        playerModel = LoadModelFromMesh(GenMeshCube(2.0, 2.0, 2.0));
-        playerModel.materials[0].shader = shader;
+        model = LoadModelFromMesh(GenMeshCube(2.0, 2.0, 2.0));
+        model.materials[0].shader = shader;
     }
 
     float weight = 0.1;
@@ -220,7 +229,7 @@ public:
         pos = lerp3D(pos, targ, 0.4);
 
         // Update player model transformation
-        playerModel.transform = MatrixTranslate(pos.x, pos.y, pos.z);
+        model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
 
         // Update center of mass (com)
         com = Vector3Add(Vector3Scale(pos, 1.0f - weight), Vector3Scale(tether.pos, weight));
@@ -230,7 +239,7 @@ public:
 
     void draw() {
         // Draw the cube with WHITE as base color (shader will modify it)
-        DrawModel(playerModel, Vector3Zero(), 1.0f, RED);
+        DrawModel(model, Vector3Zero(), 1.0f, RED);
     }
 
 };
@@ -421,9 +430,70 @@ void handle_collisions(Player& player, std::vector<Animal>& animals) {
 }
 
 
+RenderTexture2D LoadShadowmapRenderTexture(int width, int height)
+{
+    RenderTexture2D target = { 0 };
+
+    target.id = rlLoadFramebuffer(0,0); // Load an empty framebuffer
+    target.texture.width = width;
+    target.texture.height = height;
+
+    if (target.id > 0)
+    {
+        rlEnableFramebuffer(target.id);
+
+        // Create depth texture
+        // We don't need a color texture for the shadowmap
+        target.depth.id = rlLoadTextureDepth(width, height, false);
+        target.depth.width = width;
+        target.depth.height = height;
+        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT?
+        target.depth.mipmaps = 1;
+
+        // Attach depth texture to FBO
+        rlFramebufferAttach(target.id, target.depth.id, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_TEXTURE2D, 0);
+
+        // Check if fbo is complete with attachments (valid)
+        if (rlFramebufferComplete(target.id)) TRACELOG(LOG_INFO, "FBO: [ID %i] Framebuffer object created successfully", target.id);
+
+        rlDisableFramebuffer();
+    }
+    else TRACELOG(LOG_WARNING, "FBO: Framebuffer object can not be created");
+
+    return target;
+}
+
+// Unload shadowmap render texture from GPU memory (VRAM)
+void UnloadShadowmapRenderTexture(RenderTexture2D target)
+{
+    if (target.id > 0)
+    {
+        // NOTE: Depth texture/renderbuffer is automatically
+        // queried and deleted before deleting framebuffer
+        rlUnloadFramebuffer(target.id);
+    }
+}
+
+void draw_scene(Model cube, Player player, std::vector<Animal> animals) {
+    DrawModelEx(cube,
+        Vector3Zero(),
+        (Vector3) { 0.0f, -1.0f, 0.0f },
+        0.0f,
+        (Vector3) { 40.0f, 1.0f, 40.0f },
+        (Color) {50, 168, 82, 255}
+    );
+    player.draw();
+    player.tether.draw();
+    player.rope.draw();
+
+    for (auto& animal : animals) {
+        animal.draw();
+    }
+}
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
+
 int main(void) {
   int width = GetScreenWidth();
   int height = GetScreenHeight();
@@ -450,45 +520,52 @@ int main(void) {
 // Load textures
     // After initializing the camera
 
-    rl::Shader shader (TextFormat("resources/shaders/lighting.vs", GLSL_VERSION),
+    rl::Shader shadowShader (TextFormat("resources/shaders/lighting.vs", GLSL_VERSION),
                        TextFormat("resources/shaders/lighting.fs", GLSL_VERSION));
     // Get some required shader locations
-    shader.locs[SHADER_LOC_VECTOR_VIEW] = shader.GetLocation("viewPos");
-    // NOTE: "matModel" location name is automatically assigned on shader loading,
-    // no need to get the location again if using that uniform name
-    //shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
-
-    // Ambient light level (some basic lighting)
-    int ambientLoc = shader.GetLocation("ambient");
-    std::array<float, 4> ambientValues = {0.9f, 0.9f, 0.9f, 1.0f};
-    shader.SetValue(ambientLoc, ambientValues.data(), SHADER_UNIFORM_VEC4);
-
-    // Create lights
-    std::array<Light, MAX_LIGHTS> lights = {
-        CreateLight(LIGHT_POINT, (Vector3) {
-            -10, 40, 10},
-            Vector3Zero(),
-            (Color){255, 250, 189, 255},
-            shader
-        ),
-    };
+    shadowShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shadowShader, "viewPos");
+    Vector3 lightDir = Vector3Normalize((Vector3){ 0.35f, -1.0f, -0.35f });
+    Color lightColor = WHITE;
+    Vector4 lightColorNormalized = ColorNormalize(lightColor);
+    int lightDirLoc = GetShaderLocation(shadowShader, "lightDir");
+    int lightColLoc = GetShaderLocation(shadowShader, "lightColor");
+    SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
+    SetShaderValue(shadowShader, lightColLoc, &lightColorNormalized, SHADER_UNIFORM_VEC4);
+    int ambientLoc = GetShaderLocation(shadowShader, "ambient");
+    float ambient[4] = {0.1f, 0.1f, 0.1f, 1.0f};
+    SetShaderValue(shadowShader, ambientLoc, ambient, SHADER_UNIFORM_VEC4);
+    int lightVPLoc = GetShaderLocation(shadowShader, "lightVP");
+    int shadowMapLoc = GetShaderLocation(shadowShader, "shadowMap");
+    int shadowMapResolution = SHADOWMAP_RESOLUTION;
+    SetShaderValue(shadowShader, GetShaderLocation(shadowShader, "shadowMapResolution"), &shadowMapResolution, SHADER_UNIFORM_INT);
 
 
     Player player = Player(
         vec3{0.0,1.0,0.0},
         0.2,
-        shader);
+        shadowShader);
 
     std::vector<Animal> animals;
     for (int i = 0; i < 10; i++) {  // Create 10 animals, for example
-        animals.push_back(Animal(vec3{GetRandomFloat(-25, 25), 1.0f, GetRandomFloat(-25, 25)}, 5.0f, shader));
+        animals.push_back(Animal(vec3{GetRandomFloat(-25, 25), 1.0f, GetRandomFloat(-25, 25)}, 5.0f, shadowShader));
     }
 
+    Model cube = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
+    cube.materials[0].shader = shadowShader;
 
-    Model planeModel = LoadModelFromMesh(GenMeshPlane(50.0, 50.0, 2, 2));
-    planeModel.materials[0].shader = shader;
+    RenderTexture2D shadowMap = LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
+    // For the shadowmapping algorithm, we will be rendering everything from the light's point of view
+    Camera3D lightCam = (Camera3D){ 0 };
+    lightCam.position = Vector3Normalize(vec3{-10.0, 70.0, 10.0});//Vector3Scale(lightDir, -15.0f);
+    lightCam.target = Vector3Zero();
+    // Use an orthographic projection for directional lights
+    lightCam.projection = CAMERA_ORTHOGRAPHIC;
+    lightCam.up = (Vector3){ 0.0f, 1.0f, 0.0f };
+    lightCam.fovy = 50.0f;
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+        int fc = 0;
+
     SetExitKey(KEY_NULL);
     //--------------------------------------------------------------------------------------
 
@@ -498,6 +575,9 @@ int main(void) {
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
+
+         float dt = GetFrameTime();
+
       handle_collisions(player, animals);
       player.tether.update(camera);
       player.update();
@@ -507,30 +587,66 @@ int main(void) {
         }
       update_camera(camera, player);
 
-      std::array<float, 3> cameraPos = { camera.position.x, camera.position.y, camera.position.z };
-        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos.data(), SHADER_UNIFORM_VEC3);
+        Vector3 cameraPos = camera.position;
+        SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
+
+                const float cameraSpeed = 0.05f;
+        if (IsKeyDown(KEY_LEFT))
+        {
+            if (lightDir.x < 0.6f)
+                lightDir.x += cameraSpeed * 60.0f * dt;
+        }
+        if (IsKeyDown(KEY_RIGHT))
+        {
+            if (lightDir.x > -0.6f)
+                lightDir.x -= cameraSpeed * 60.0f * dt;
+        }
+        if (IsKeyDown(KEY_UP))
+        {
+            if (lightDir.z < 0.6f)
+                lightDir.z += cameraSpeed * 60.0f * dt;
+        }
+        if (IsKeyDown(KEY_DOWN))
+        {
+            if (lightDir.z > -0.6f)
+                lightDir.z -= cameraSpeed * 60.0f * dt;
+        }
+        lightDir = Vector3Normalize(lightDir);
+        lightCam.position = Vector3Scale(lightDir, -15.0f);
+        SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
+
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
+            Matrix lightView;
+            Matrix lightProj;
+            BeginTextureMode(shadowMap);
+            ClearBackground(WHITE);
+            BeginMode3D(lightCam);
+                lightView = rlGetMatrixModelview();
+                lightProj = rlGetMatrixProjection();
+                draw_scene(cube, player, animals);
+            EndMode3D();
+            EndTextureMode();
+            Matrix lightViewProj = MatrixMultiply(lightView, lightProj);
+
 
             ClearBackground(RAYWHITE);
 
+            SetShaderValueMatrix(shadowShader, lightVPLoc, lightViewProj);
+
+            rlEnableShader(shadowShader.id);
+            int slot = 10; // Can be anything 0 to 15, but 0 will probably be taken up
+            rlActiveTextureSlot(10);
+            rlEnableTexture(shadowMap.depth.id);
+            rlSetUniform(shadowMapLoc, &slot, SHADER_UNIFORM_INT, 1);
+
             BeginMode3D(camera);
-            BeginShaderMode(shader);
 
             // Update light values (ensure this is called in the main game loop)
-                player.draw();
-                player.tether.draw();
-                for (auto& animal : animals) {
-                    animal.draw();
-                }
+                draw_scene(cube, player, animals);
 
-                DrawModel(planeModel, Vector3Zero(), 1.0f, (Color){56, 186, 95, 255});
-
-                player.rope.draw();
-
-            EndShaderMode();
             EndMode3D();
 
             DrawText("Welcome to the third dimension!", 10, 40, 20, DARKGRAY);
@@ -543,7 +659,14 @@ int main(void) {
 
 
     // De-Initialization
-    UnloadShader(shader);   // Unload shader
+    UnloadShader(shadowShader);
+    UnloadModel(player.model);
+    UnloadModel(player.tether.model);
+    for (auto& animal : animals) {
+        UnloadModel(animal.model);
+    }
+    UnloadShadowmapRenderTexture(shadowMap);
+    //UnloadModel(cube);
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
