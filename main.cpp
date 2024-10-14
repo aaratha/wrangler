@@ -666,7 +666,7 @@ int main(void) {
         UnloadModel(animal.model);
     }
     UnloadShadowmapRenderTexture(shadowMap);
-    //UnloadModel(cube);
+    UnloadModel(cube);
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
