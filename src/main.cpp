@@ -6,6 +6,7 @@
 #include "animal.h"
 #include "physics.h"
 #include "render_utils.h"
+
 #include <random>
 #include <limits>
 #include <vector>
@@ -24,13 +25,7 @@
 
 
 int main(void) {
-  int width = GetScreenWidth();
-  int height = GetScreenHeight();
 
-
-    const float rate = 0.4;
-    // Initialization
-    //--------------------------------------------------------------------------------------
     int screenWidth = 1280;
     int screenHeight = 720;
 
@@ -45,9 +40,7 @@ int main(void) {
     camera.up = vec3{ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 60.0f;                                // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
-    // cameraMode = CAMERA_THIRD_PERSON;
 
-// Load textures
     // After initializing the camera
     RenderTexture2D dofTexture = LoadRenderTexture(screenWidth, screenHeight);
     if (dofTexture.id == 0) {

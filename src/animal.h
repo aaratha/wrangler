@@ -1,7 +1,9 @@
 #pragma once
-#include <random>
+
 #include "raylib-cpp.hpp"
 #include "utils.h"
+
+#include <random>
 
 
 enum class SpeciesType {

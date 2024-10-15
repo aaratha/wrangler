@@ -1,7 +1,6 @@
 #include "animal.h"
 
 
-
 Species::Species(SpeciesType type) : type(type) {
     switch (type) {
         case SpeciesType::WOLF:
