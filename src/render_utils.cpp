@@ -1,6 +1,22 @@
 #include "render_utils.h"
 
 namespace RenderUtils {
+
+    void InitializeWindow(int& screenWidth, int& screenHeight) {
+        SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
+        InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera mode");
+    }
+
+    Camera3D SetupCamera() {
+        Camera3D camera = { 0 };
+        camera.position = CAMERA_OFFSET;
+        camera.target = vec3{0.0, 10.0, 10.0};
+        camera.up = vec3{ 0.0f, 1.0f, 0.0f };
+        camera.fovy = 60.0f;
+        camera.projection = CAMERA_PERSPECTIVE;
+        return camera;
+    }
+
     RenderTexture2D LoadShadowmapRenderTexture(int width, int height)
     {
         RenderTexture2D target = { 0 };
@@ -99,4 +115,81 @@ namespace RenderUtils {
         UnloadShader(dofShader);
         UnloadRenderTexture(dofTexture);
     }
+
+    RenderTexture2D SetupDofTexture(int screenWidth, int screenHeight) {
+        RenderTexture2D dofTexture = LoadRenderTexture(screenWidth, screenHeight);
+        if (dofTexture.id == 0) {
+            throw std::runtime_error("Failed to create dofTexture");
+        }
+        return dofTexture;
+    }
+
+
+    rl::Shader SetupDofShader(int screenWidth, int screenHeight) {
+        rl::Shader dofShader(0, TextFormat("resources/shaders/dof.fs", GLSL_VERSION));
+        if (dofShader.id == 0) {
+            throw std::runtime_error("Failed to compile DoF shader");
+        }
+
+        float blurRadius = 3.0f;
+        float resolution[2] = {(float)screenWidth, (float)screenHeight};
+        SetShaderValue(dofShader, GetShaderLocation(dofShader, "resolution"), resolution, SHADER_UNIFORM_VEC2);
+        SetShaderValue(dofShader, GetShaderLocation(dofShader, "radius"), &blurRadius, SHADER_UNIFORM_FLOAT);
+
+        return dofShader;
+    }
+
+    rl::Shader SetupShadowShader(vec3& lightDir) {
+        rl::Shader shadowShader(TextFormat("resources/shaders/lighting.vs", GLSL_VERSION),
+                                TextFormat("resources/shaders/lighting.fs", GLSL_VERSION));
+        shadowShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shadowShader, "viewPos");
+        Color lightColor = WHITE;
+        Vector4 lightColorNormalized = ColorNormalize(lightColor);
+        int lightDirLoc = GetShaderLocation(shadowShader, "lightDir");
+        int lightColLoc = GetShaderLocation(shadowShader, "lightColor");
+        SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
+        SetShaderValue(shadowShader, lightColLoc, &lightColorNormalized, SHADER_UNIFORM_VEC4);
+        int ambientLoc = GetShaderLocation(shadowShader, "ambient");
+        float ambient[4] = {0.1f, 0.1f, 0.1f, 1.0f};
+        SetShaderValue(shadowShader, ambientLoc, ambient, SHADER_UNIFORM_VEC4);
+        int lightVPLoc = GetShaderLocation(shadowShader, "lightVP");
+        int shadowMapLoc = GetShaderLocation(shadowShader, "shadowMap");
+        int shadowMapResolution = SHADOWMAP_RESOLUTION;
+        SetShaderValue(shadowShader, GetShaderLocation(shadowShader, "shadowMapResolution"), &shadowMapResolution, SHADER_UNIFORM_INT);
+
+        return shadowShader;
+    }
+
+
+    void RenderShadowMap(Shader shadowShader, RenderTexture2D& shadowMap, Camera3D& lightCam, Model& cube, Player& player,
+                        std::vector<Animal>& animals) {
+            BeginTextureMode(shadowMap);
+            ClearBackground(WHITE);
+            BeginMode3D(lightCam);
+                Matrix lightViewProj = MatrixMultiply(rlGetMatrixModelview(), rlGetMatrixProjection());
+            SetShaderValueMatrix(shadowShader, GetShaderLocation(shadowShader, "lightVP"), lightViewProj);
+                RenderUtils::draw_scene(cube, player, animals);
+            EndMode3D();
+            EndTextureMode();
+    }
+
+    void RenderSceneToTexture(RenderTexture2D& dofTexture, Camera3D& camera, rl::Shader& shadowShader,
+                            RenderTexture2D& shadowMap, Model& cube, Player& player, std::vector<Animal>& animals) {
+        BeginTextureMode(dofTexture);
+        ClearBackground(RAYWHITE);
+
+        rlEnableShader(shadowShader.id);
+        int slot = 10;
+        rlActiveTextureSlot(10);
+        rlEnableTexture(shadowMap.depth.id);
+        rlSetUniform(GetShaderLocation(shadowShader, "shadowMap"), &slot, SHADER_UNIFORM_INT, 1);
+
+        rlDisableShader();
+        BeginMode3D(camera);
+        RenderUtils::draw_scene(cube, player, animals);
+        EndMode3D();
+
+        EndTextureMode();
+    }
+
 }
