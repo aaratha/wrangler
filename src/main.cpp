@@ -31,10 +31,11 @@ int main(void) {
     const float rate = 0.4;
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
+    int screenWidth = 1280;
+    int screenHeight = 720;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT);  // Enable Multi Sampling Anti Aliasing 4x (if available)
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera mode");
 
     // Define the camera to look into our 3d world
@@ -60,7 +61,8 @@ int main(void) {
         return -1;
     }
     float blurRadius = 3.0f;  // Control the blur strength
-    SetShaderValue(dofShader, GetShaderLocation(dofShader, "resolution"), (float[2]){(float)screenWidth, (float)screenHeight}, SHADER_UNIFORM_VEC2);
+    float resolution[2] = {(float)screenWidth, (float)screenHeight};
+    SetShaderValue(dofShader, GetShaderLocation(dofShader, "resolution"), resolution, SHADER_UNIFORM_VEC2);
     SetShaderValue(dofShader, GetShaderLocation(dofShader, "radius"), &blurRadius, SHADER_UNIFORM_FLOAT);
     int resolutionLoc = GetShaderLocation(dofShader, "resolution");
     int radiusLoc = GetShaderLocation(dofShader, "radius");
@@ -125,6 +127,11 @@ int main(void) {
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
         //----------------------------------------------------------------------------------
+
+        if (IsWindowResized() && !IsWindowFullscreen()) {
+            screenWidth = GetScreenWidth();
+            screenHeight = GetScreenHeight();
+        }
 
          float dt = GetFrameTime();
 
