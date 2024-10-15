@@ -21,31 +21,7 @@
 #define SHADOWMAP_RESOLUTION 2048
 
 
-const float speed = 0.2;
-const vec3 CAMERA_OFFSET = {0.0, 15.0, 8.0};
 
-
-void update_camera(Camera3D& camera, Player player) {
-    camera.target.x = lerp_to(camera.target.x, player.com.x, 0.2f);
-    camera.target.z = lerp_to(camera.target.z, player.com.z, 0.2f);
-    camera.target.y = 0.0f;
-    //camera.position = lerp3D(camera.position, player.com + vec3{0.0, 15.0, 8.0}, 0.9);
-    camera.position = player.pos + CAMERA_OFFSET;
-    camera.position.x = player.com.x + CAMERA_OFFSET.x;
-
-    #if defined(_WIN32) || defined(_WIN64)
-        camera.fovy -= 3*GetMouseWheelMove();
-    #else
-        camera.fovy -= GetMouseWheelMove();
-    #endif
-    camera.fovy = Clamp(camera.fovy, 20.0f, 100.0f);
-    camera.fovy = Clamp(camera.fovy, 20.0f, 100.0f);
-}
-
-
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
 
 int main(void) {
   int width = GetScreenWidth();
@@ -243,18 +219,15 @@ int main(void) {
         //----------------------------------------------------------------------------------
     }
 
-
-    // De-Initialization
-    UnloadShader(shadowShader);
-    UnloadModel(player.model);
-    UnloadModel(player.tether.model);
-    for (auto& animal : animals) {
-        UnloadModel(animal.model);
-    }
-    UnloadShadowmapRenderTexture(shadowMap);
-    UnloadModel(cube);
-    UnloadShader(dofShader);
-    UnloadRenderTexture(dofTexture);
+    UnloadResources(
+        shadowShader,
+        player,
+        animals,
+        shadowMap,
+        cube,
+        dofShader,
+        dofTexture
+    );
 
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
