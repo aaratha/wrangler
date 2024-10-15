@@ -103,7 +103,7 @@ int main(void) {
     Model cube = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
     cube.materials[0].shader = shadowShader;
 
-    RenderTexture2D shadowMap = LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
+    RenderTexture2D shadowMap = RenderUtils::LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
     // For the shadowmapping algorithm, we will be rendering everything from the light's point of view
     Camera3D lightCam = (Camera3D){ 0 };
     lightCam.position = Vector3Normalize(vec3{-10.0, 70.0, 10.0});//Vector3Scale(lightDir, -15.0f);
@@ -135,7 +135,7 @@ int main(void) {
         for (auto& animal : animals) {
             animal.update();
         }
-      update_camera(camera, player);
+      RenderUtils::update_camera(camera, player);
 
         Vector3 cameraPos = camera.position;
         SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
@@ -175,7 +175,7 @@ int main(void) {
         BeginMode3D(lightCam);
             lightView = rlGetMatrixModelview();
             lightProj = rlGetMatrixProjection();
-            draw_scene(cube, player, animals);
+            RenderUtils::draw_scene(cube, player, animals);
         EndMode3D();
         EndTextureMode();
 
@@ -197,7 +197,7 @@ int main(void) {
             BeginMode3D(camera);
 
             // Update light values (ensure this is called in the main game loop)
-                draw_scene(cube, player, animals);
+                RenderUtils::draw_scene(cube, player, animals);
 
             EndMode3D();
 
@@ -219,7 +219,7 @@ int main(void) {
         //----------------------------------------------------------------------------------
     }
 
-    UnloadResources(
+    RenderUtils::UnloadResources(
         shadowShader,
         player,
         animals,

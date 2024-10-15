@@ -6,24 +6,21 @@
 #include "animal.h"
 #include <vector>
 
-RenderTexture2D LoadShadowmapRenderTexture(int width, int height);
-void UnloadShadowmapRenderTexture(RenderTexture2D target);
+namespace RenderUtils {
+    RenderTexture2D LoadShadowmapRenderTexture(int width, int height);
+    void UnloadShadowmapRenderTexture(RenderTexture2D target);
 
-RenderTexture2D LoadShadowmapRenderTexture(int width, int height);
+    void draw_scene(Model cube, Player player, std::vector<Animal> animals);
 
-// Unload shadowmap render texture from GPU memory (VRAM)
-void UnloadShadowmapRenderTexture(RenderTexture2D target);
+    void update_camera(Camera3D& camera, Player player);
 
-void draw_scene(Model cube, Player player, std::vector<Animal> animals);
-
-void update_camera(Camera3D& camera, Player player);
-
-void UnloadResources(
-    Shader shadowShader,
-    Player player,
-    std::vector<Animal> animals,
-    RenderTexture2D shadowMap,
-    Model cube,
-    Shader dofShader,
-    RenderTexture2D dofTexture
-);
+    void UnloadResources(
+        Shader shadowShader,
+        Player player,
+        std::vector<Animal> animals,
+        RenderTexture2D shadowMap,
+        Model cube,
+        Shader dofShader,
+        RenderTexture2D dofTexture
+    );
+}
