@@ -519,6 +519,27 @@ int main(void) {
 
 // Load textures
     // After initializing the camera
+    RenderTexture2D dofTexture = LoadRenderTexture(screenWidth, screenHeight);
+    if (dofTexture.id == 0) {
+        printf("Failed to create dofTexture\n");
+        return -1;
+    }
+
+    rl::Shader dofShader (0,TextFormat("resources/shaders/dof.fs", GLSL_VERSION));
+    if (dofShader.id == 0) {
+        printf("Failed to compile DoF shader\n");
+        return -1;
+    }
+    float blurRadius = 3.0f;  // Control the blur strength
+    SetShaderValue(dofShader, GetShaderLocation(dofShader, "resolution"), (float[2]){(float)screenWidth, (float)screenHeight}, SHADER_UNIFORM_VEC2);
+    SetShaderValue(dofShader, GetShaderLocation(dofShader, "radius"), &blurRadius, SHADER_UNIFORM_FLOAT);
+    int resolutionLoc = GetShaderLocation(dofShader, "resolution");
+    int radiusLoc = GetShaderLocation(dofShader, "radius");
+    if (resolutionLoc == -1 || radiusLoc == -1) {
+        printf("Failed to get shader uniform locations\n");
+        return -1;
+    }
+
 
     rl::Shader shadowShader (TextFormat("resources/shaders/lighting.vs", GLSL_VERSION),
                        TextFormat("resources/shaders/lighting.fs", GLSL_VERSION));
@@ -618,17 +639,18 @@ int main(void) {
 
         // Draw
         //----------------------------------------------------------------------------------
-        BeginDrawing();
-            Matrix lightView;
-            Matrix lightProj;
-            BeginTextureMode(shadowMap);
-            ClearBackground(WHITE);
-            BeginMode3D(lightCam);
-                lightView = rlGetMatrixModelview();
-                lightProj = rlGetMatrixProjection();
-                draw_scene(cube, player, animals);
-            EndMode3D();
-            EndTextureMode();
+        Matrix lightView;
+        Matrix lightProj;
+        BeginTextureMode(shadowMap);
+        ClearBackground(WHITE);
+        BeginMode3D(lightCam);
+            lightView = rlGetMatrixModelview();
+            lightProj = rlGetMatrixProjection();
+            draw_scene(cube, player, animals);
+        EndMode3D();
+        EndTextureMode();
+
+        BeginTextureMode(dofTexture);
             Matrix lightViewProj = MatrixMultiply(lightView, lightProj);
 
 
@@ -642,6 +664,7 @@ int main(void) {
             rlEnableTexture(shadowMap.depth.id);
             rlSetUniform(shadowMapLoc, &slot, SHADER_UNIFORM_INT, 1);
 
+            rlDisableShader();
             BeginMode3D(camera);
 
             // Update light values (ensure this is called in the main game loop)
@@ -649,10 +672,20 @@ int main(void) {
 
             EndMode3D();
 
+        EndTextureMode();
+
+        BeginDrawing();
+            ClearBackground(RAYWHITE);
+
+    // Use the blur shader
+            BeginShaderMode(dofShader);
+                // Draw the render texture to the screen with the shader
+                DrawTexture(dofTexture.texture, 0, 0, WHITE);
+
+            EndShaderMode();
             DrawText("Welcome to the third dimension!", 10, 40, 20, DARKGRAY);
 
             DrawFPS(10, 10);
-
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -667,6 +700,9 @@ int main(void) {
     }
     UnloadShadowmapRenderTexture(shadowMap);
     UnloadModel(cube);
+    UnloadShader(dofShader);
+    UnloadRenderTexture(dofTexture);
+
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
