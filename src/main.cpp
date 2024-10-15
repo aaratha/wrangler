@@ -1,10 +1,11 @@
 #include "raylib-cpp.hpp"
 #include "raymath.h"
 #include "rlgl.h"
-#include "util.h"
+#include "utils.h"
 #include "player.h"
 #include "animal.h"
-#include "shader_utils.h"
+#include "physics.h"
+#include "render_utils.h"
 #include <random>
 #include <limits>
 #include <vector>
@@ -20,108 +21,8 @@
 #define SHADOWMAP_RESOLUTION 2048
 
 
-
-
-RenderTexture2D LoadShadowmapRenderTexture(int width, int height);
-void UnloadShadowmapRenderTexture(RenderTexture2D target);
-
-
 const float speed = 0.2;
 const vec3 CAMERA_OFFSET = {0.0, 15.0, 8.0};
-
-
-enum class SpeciesType {
-    WOLF,
-    SHEEP,
-    COW
-};
-
-class Species {
-public:
-    SpeciesType type;
-    Color color;
-    std::string name;
-
-    Species(SpeciesType type) : type(type) {
-        switch (type) {
-            case SpeciesType::WOLF:
-                color = GRAY;
-                name = "Wolf";
-                break;
-            case SpeciesType::SHEEP:
-                color = WHITE;
-                name = "Sheep";
-                break;
-            case SpeciesType::COW:
-                color = BROWN;
-                name = "Cow";
-                break;
-        }
-    }
-};
-
-SpeciesType getRandomSpecies() {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    static std::uniform_int_distribution<> dis(0, 2);
-
-    int randomNumber = dis(gen);
-    switch (randomNumber) {
-        case 0: return SpeciesType::WOLF;
-        case 1: return SpeciesType::SHEEP;
-        case 2: return SpeciesType::COW;
-        default: return SpeciesType::SHEEP; // Fallback, should never happen
-    }
-}
-
-
-
-class Animal {
-public:
-    vec3 pos;
-    vec3 targ;
-    float speed;
-    Shader shader;
-    Model model;
-    double lastUpdateTime;
-    Species species;
-
-    Animal(vec3 pos, float speed, Shader shader) :
-        pos(pos), speed(speed), shader(shader), lastUpdateTime(0), species(getRandomSpecies())
-    {
-        targ = pos;
-        model = LoadModelFromMesh(GenMeshSphere(0.5, 20, 20));
-        model.materials[0].shader = shader;
-    }
-
-    void setNewRandomTarget() {
-        // Define the range for random movement (e.g., [-1.0, 1.0])
-        float rangep = 1.0f;
-
-        // Generate a random value within the range for both x and z coordinates
-        float rangeX = ((float)GetRandomValue(-1000, 1000) / 1000.0f) * rangep;
-        float rangeZ = ((float)GetRandomValue(-1000, 1000) / 1000.0f) * rangep;
-
-        // Update the target position with the new random values
-        targ.x = targ.x + rangeX;
-        targ.z = targ.z + rangeZ;
-    }
-
-    void update() {
-        double currentTime = GetTime();
-        if (currentTime - lastUpdateTime >= 1.0) {
-            setNewRandomTarget();
-            lastUpdateTime = currentTime;
-        }
-
-        pos = lerp3D(pos, targ, 0.03);
-        model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
-    }
-
-    void draw() {
-        DrawModel(model, Vector3Zero(), 1.0f, species.color);
-    }
-};
 
 
 void update_camera(Camera3D& camera, Player player) {
@@ -141,140 +42,7 @@ void update_camera(Camera3D& camera, Player player) {
     camera.fovy = Clamp(camera.fovy, 20.0f, 100.0f);
 }
 
-// Helper function to get the closest point on a line segment to a point
-vec3 GetClosestPointOnLineFromPoint(vec3 point, vec3 lineStart, vec3 lineEnd) {
-    vec3 line = Vector3Subtract(lineEnd, lineStart);
-    float lineLength = Vector3Length(line);
-    vec3 lineNormalized = Vector3Scale(line, 1.0f / lineLength);
 
-    float t = Vector3DotProduct(Vector3Subtract(point, lineStart), lineNormalized);
-    t = Clamp(t, 0, lineLength);
-
-    return Vector3Add(lineStart, Vector3Scale(lineNormalized, t));
-}
-
-// Helper function to check collision between a point and a line segment
-bool CheckCollisionPointLine(vec3 point, vec3 lineStart, vec3 lineEnd, float threshold) {
-    vec3 closest = GetClosestPointOnLineFromPoint(point, lineStart, lineEnd);
-    return Vector3Distance(point, closest) <= threshold;
-}
-
-void handle_collisions(Player& player, std::vector<Animal>& animals) {
-    const float playerRadius = 1.5f; // Assuming the player cube has a side length of 2.0
-    const float animalRadius = 0.5f; // From the Animal constructor
-    const float tetherRadius = 0.5f; // From the Tether constructor
-    const float ropeSegmentRadius = 0.5f; // From the Rope constructor
-
-    // Player cube vs Animals
-    for (auto& animal : animals) {
-        if (CheckCollisionSpheres(player.pos, playerRadius, animal.pos, animalRadius)) {
-            // Handle player-animal collision
-            vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animal.pos, player.pos));
-            float overlap = playerRadius + animalRadius - Vector3Distance(player.pos, animal.pos);
-            player.pos = Vector3Subtract(player.pos, Vector3Scale(collisionNormal, overlap * 0.5f));
-            animal.pos = Vector3Add(animal.pos, Vector3Scale(collisionNormal, overlap * 0.5f));
-        }
-    }
-
-    // Player rope vs Animals
-    for (auto& animal : animals) {
-        for (int i = 0; i < player.rope.num_points - 1; i++) {
-            if (CheckCollisionPointLine(animal.pos, player.rope.points[i], player.rope.points[i+1], ropeSegmentRadius)) {
-                // Handle rope-animal collision
-                vec3 closestPoint = GetClosestPointOnLineFromPoint(animal.pos, player.rope.points[i], player.rope.points[i+1]);
-                vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animal.pos, closestPoint));
-                float overlap = ropeSegmentRadius + animalRadius - Vector3Distance(closestPoint, animal.pos);
-                animal.targ = Vector3Add(animal.targ, Vector3Scale(collisionNormal, overlap*0.8));
-            }
-        }
-    }
-
-
-    // Player tether vs Animals
-    for (auto& animal : animals) {
-        if (CheckCollisionSpheres(player.tether.pos, tetherRadius, animal.pos, animalRadius)) {
-            // Handle tether-animal collision
-            vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animal.pos, player.tether.pos));
-            float overlap = tetherRadius + animalRadius - Vector3Distance(player.tether.pos, animal.pos);
-            animal.pos = Vector3Add(animal.pos, Vector3Scale(collisionNormal, overlap));
-        }
-    }
-
-    // Animal vs Animal
-    for (size_t i = 0; i < animals.size(); i++) {
-        for (size_t j = i + 1; j < animals.size(); j++) {
-            if (CheckCollisionSpheres(animals[i].pos, animalRadius, animals[j].pos, animalRadius)) {
-                // Handle animal-animal collision
-                vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animals[j].pos, animals[i].pos));
-                float overlap = 2 * animalRadius - Vector3Distance(animals[i].pos, animals[j].pos);
-                animals[i].pos = Vector3Subtract(animals[i].pos, Vector3Scale(collisionNormal, overlap * 0.5f));
-                animals[j].pos = Vector3Add(animals[j].pos, Vector3Scale(collisionNormal, overlap * 0.5f));
-            }
-        }
-    }
-}
-
-
-RenderTexture2D LoadShadowmapRenderTexture(int width, int height)
-{
-    RenderTexture2D target = { 0 };
-
-    target.id = rlLoadFramebuffer(0,0); // Load an empty framebuffer
-    target.texture.width = width;
-    target.texture.height = height;
-
-    if (target.id > 0)
-    {
-        rlEnableFramebuffer(target.id);
-
-        // Create depth texture
-        // We don't need a color texture for the shadowmap
-        target.depth.id = rlLoadTextureDepth(width, height, false);
-        target.depth.width = width;
-        target.depth.height = height;
-        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT?
-        target.depth.mipmaps = 1;
-
-        // Attach depth texture to FBO
-        rlFramebufferAttach(target.id, target.depth.id, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_TEXTURE2D, 0);
-
-        // Check if fbo is complete with attachments (valid)
-        if (rlFramebufferComplete(target.id)) TRACELOG(LOG_INFO, "FBO: [ID %i] Framebuffer object created successfully", target.id);
-
-        rlDisableFramebuffer();
-    }
-    else TRACELOG(LOG_WARNING, "FBO: Framebuffer object can not be created");
-
-    return target;
-}
-
-// Unload shadowmap render texture from GPU memory (VRAM)
-void UnloadShadowmapRenderTexture(RenderTexture2D target)
-{
-    if (target.id > 0)
-    {
-        // NOTE: Depth texture/renderbuffer is automatically
-        // queried and deleted before deleting framebuffer
-        rlUnloadFramebuffer(target.id);
-    }
-}
-
-void draw_scene(Model cube, Player player, std::vector<Animal> animals) {
-    DrawModelEx(cube,
-        Vector3Zero(),
-        (Vector3) { 0.0f, -1.0f, 0.0f },
-        0.0f,
-        (Vector3) { 40.0f, 1.0f, 40.0f },
-        (Color) {50, 168, 82, 255}
-    );
-    player.draw();
-    player.tether.draw();
-    player.rope.draw();
-
-    for (auto& animal : animals) {
-        animal.draw();
-    }
-}
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------

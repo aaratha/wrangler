@@ -1,7 +1,7 @@
 #pragma once
 
 #include "utils.h"
-#include "raylib.h"
+#include "raylib-cpp.hpp"
 
 class Tether {
 public:
