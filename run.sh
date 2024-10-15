@@ -3,10 +3,10 @@
 # Check for the OS type
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
     # Windows with MinGW
-    cmake . -B build -G "MinGW Makefiles"
+    cmake ./src -B build -G "MinGW Makefiles"
 else
     # Unix-based system (macOS/Linux)
-    cmake . -B build -G
+    cmake ./src -B build -G
 fi
 cmake --build build
 build/wrangler

@@ -1,13 +1,15 @@
 #include "raylib-cpp.hpp"
 #include "raymath.h"
 #include "rlgl.h"
+#include "util.h"
+#include "player.h"
+#include "animal.h"
+#include "shader_utils.h"
 #include <random>
 #include <limits>
 #include <vector>
 #include <array>
 
-#define RLIGHTS_IMPLEMENTATION
-#include "rlights.h"
 
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
@@ -18,231 +20,14 @@
 #define SHADOWMAP_RESOLUTION 2048
 
 
-namespace rl = raylib;  // Add this line after includes
-using vec3 = rl::Vector3;  // Add this line after namespace alias
 
 
 RenderTexture2D LoadShadowmapRenderTexture(int width, int height);
 void UnloadShadowmapRenderTexture(RenderTexture2D target);
-void DrawScene(Model cube, Model robot);
 
 
 const float speed = 0.2;
 const vec3 CAMERA_OFFSET = {0.0, 15.0, 8.0};
-
-float lerp_to(float position, float target, float rate) {
-  return position + (target - position) * rate;
-}
-
-vec3 lerp3D(vec3 position, vec3 target, float rate) {
-  return position + (target - position) * rate;
-}
-
-float GetRandomFloat(float min, float max) {
-    return min + (max - min) * ((float)GetRandomValue(0, RAND_MAX) / (float)RAND_MAX);
-}
-
-class Tether {
-public:
-  vec3 pos;
-  vec3 targ;
-  Shader shader;
-  Model model;
-
-  Tether(Shader shader) : shader(shader) {
-    pos = vec3{0.0, 1.0, 10.0};
-    targ = vec3{0.0, 0.0, 10.0};
-
-    model = LoadModelFromMesh(GenMeshSphere(0.5, 20, 20));
-    model.materials[0].shader = shader;
-  }
-
-    void update(const Camera3D& camera) {
-        // Get mouse position
-        Vector2 mousePos = GetMousePosition();
-
-        // Get the ray from the mouse position
-        Ray ray = GetMouseRay(mousePos, camera);
-
-        // Calculate intersection with XZ plane (Y = 0)
-        // Using the formula: t = -plane.y / ray.direction.y
-        float t = -ray.position.y / ray.direction.y;
-
-        // Get the intersection point
-        vec3 intersection = {
-            ray.position.x + ray.direction.x * t,
-            1.0f,  // We're projecting onto XZ plane, so y = 0
-            ray.position.z + ray.direction.z * t
-        };
-
-        // Lerp to the intersection point
-        pos = lerp3D(pos, intersection, 0.3f);
-        model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
-    }
-
-  void draw() {
-    DrawModel(model, Vector3Zero(), 1.0f, BLUE);
-  }
-};
-
-class Rope {
-public:
-  vec3 start;
-  vec3 end;
-  float thickness;
-  int num_points;
-  float constraint;
-  std::vector<vec3> points;
-  std::vector<vec3> velocities;  // MAX_POINTS should be the number of points in the rope
-  float friction = 0.98f;  // Friction factor (close to 1.0 means low friction, close to 0 means high friction)
-
-
-  int sides = 10;
-
-    Rope(
-      vec3 playerPos,
-      vec3 tetherPos,
-      float thickness,
-      int num_points,
-      float constraint
-    ) : start(playerPos),
-        end(tetherPos),
-        thickness(thickness),
-        num_points(num_points),
-        constraint(constraint) {
-
-      points = std::vector<vec3>(num_points); // Initialize vector with num_points
-      velocities = std::vector<vec3>(num_points);
-      init_points();
-    }
-
-    void init_points() {
-        for (int i = 0; i < num_points; ++i) {
-            float t = static_cast<float>(i) / (num_points - 1); // Normalized factor
-            points[i] = Vector3Lerp(start, end, t); // Calculate the position at t
-        }
-    }
-
-
-    void update(vec3 playerPos, vec3 tetherPos) {
-        start = playerPos;
-        end = tetherPos;
-        points[0] = start;
-        points[num_points - 1] = end;
-
-        for (int i = 1; i < num_points - 1; ++i) {
-            // Calculate the position difference from neighboring points
-            vec3 vec2prev = points[i] - points[i - 1];
-            vec3 vec2next = points[i + 1] - points[i];
-            float dist2prev = Vector3Length(vec2prev);
-            float dist2next = Vector3Length(vec2next);
-
-            // Constrain distances
-            if (dist2prev > constraint) {
-                vec2prev = Vector3Scale(Vector3Normalize(vec2prev), constraint);
-            }
-            if (dist2next > constraint) {
-                vec2next = Vector3Scale(Vector3Normalize(vec2next), constraint);
-            }
-
-            // Calculate the velocity based on the current and next position
-            vec3 newPos = (points[i - 1] + vec2prev + points[i + 1] - vec2next) / 2;
-            vec3 velocity = newPos - points[i];
-
-            // Apply friction to the velocity
-            velocity = Vector3Scale(velocity, friction);
-
-            // Update the point's position using the velocity
-            points[i] = points[i] + velocity;
-
-            // Optionally, store this velocity for the next update if needed
-            velocities[i] = velocity;
-        }
-    }
-
-
-  void draw() {
-    for (int i=0; i<num_points -1; i++) {
-      DrawCylinderEx(
-        points[i],
-        points[i+1],
-        thickness,
-        thickness,
-        sides,
-        RED
-      ); // Draw a cylinder with base at startPos and top at endPos
-    }
-  }
-
-};
-
-class Player {
-public:
-    vec3 pos;
-    vec3 targ;
-    float movementSpeed;
-    Tether tether;
-    Rope rope;
-    vec3 com;
-    Shader shader;
-    Model model;
-    //Rope rope = Rope(pos, tether);
-
-    // Constructor
-    Player(vec3 startPos, float speed, Shader shader)
-        : pos(startPos), targ(startPos), movementSpeed(speed),
-        tether(shader), rope(pos, targ, 0.1, 15, 0.05f), com(0.0, 0.0, 5.0), shader(shader) {
-
-        weight = 0.3f;
-        model = LoadModelFromMesh(GenMeshCube(2.0, 2.0, 2.0));
-        model.materials[0].shader = shader;
-    }
-
-    float weight = 0.1;
-
-    // Method to handle input and move the player
-    void update() {
-        vec3 direction = vec3(0.0f, 0.0f, 0.0f);  // Movement direction
-
-        if (IsKeyDown(KEY_W)) {
-            direction += vec3(0.0f, 0.0f, -1.0f);  // Move forward
-        }
-        if (IsKeyDown(KEY_S)) {
-            direction += vec3(0.0f, 0.0f, 1.0f);   // Move backward
-        }
-        if (IsKeyDown(KEY_A)) {
-            direction += vec3(-1.0f, 0.0f, 0.0f);  // Move left
-        }
-        if (IsKeyDown(KEY_D)) {
-            direction += vec3(1.0f, 0.0f, 0.0f);   // Move right
-        }
-
-        // Normalize direction if it's non-zero to prevent diagonal speed boost
-        if (Vector3Length(direction) > 0.0f) {
-            direction = Vector3Normalize(direction);
-        }
-
-        // Apply movement speed
-        targ += direction * movementSpeed;
-
-        // Interpolate position smoothly
-        pos = lerp3D(pos, targ, 0.4);
-
-        // Update player model transformation
-        model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
-
-        // Update center of mass (com)
-        com = Vector3Add(Vector3Scale(pos, 1.0f - weight), Vector3Scale(tether.pos, weight));
-
-    }
-
-
-    void draw() {
-        // Draw the cube with WHITE as base color (shader will modify it)
-        DrawModel(model, Vector3Zero(), 1.0f, RED);
-    }
-
-};
 
 
 enum class SpeciesType {
