@@ -22,54 +22,47 @@
 #define SHADOWMAP_RESOLUTION 2048
 
 
-
-
-int main(void) {
-
-    int screenWidth = 1280;
-    int screenHeight = 720;
-
-    SetConfigFlags(FLAG_MSAA_4X_HINT);  // Enable Multi Sampling Anti Aliasing 4x (if available)
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
+void InitializeWindow(int& screenWidth, int& screenHeight) {
+    SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera mode");
+}
 
-    // Define the camera to look into our 3d world
+Camera3D SetupCamera() {
     Camera3D camera = { 0 };
-    camera.position = CAMERA_OFFSET;  // Camera position
-    camera.target = vec3{0.0, 10.0, 10.0};      // Camera looking at point
-    camera.up = vec3{ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-    camera.fovy = 60.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
+    camera.position = CAMERA_OFFSET;
+    camera.target = vec3{0.0, 10.0, 10.0};
+    camera.up = vec3{ 0.0f, 1.0f, 0.0f };
+    camera.fovy = 60.0f;
+    camera.projection = CAMERA_PERSPECTIVE;
+    return camera;
+}
 
-    // After initializing the camera
+RenderTexture2D SetupDofTexture(int screenWidth, int screenHeight) {
     RenderTexture2D dofTexture = LoadRenderTexture(screenWidth, screenHeight);
     if (dofTexture.id == 0) {
-        printf("Failed to create dofTexture\n");
-        return -1;
+        throw std::runtime_error("Failed to create dofTexture");
+    }
+    return dofTexture;
+}
+
+rl::Shader SetupDofShader(int screenWidth, int screenHeight) {
+    rl::Shader dofShader(0, TextFormat("resources/shaders/dof.fs", GLSL_VERSION));
+    if (dofShader.id == 0) {
+        throw std::runtime_error("Failed to compile DoF shader");
     }
 
-    rl::Shader dofShader (0,TextFormat("resources/shaders/dof.fs", GLSL_VERSION));
-    if (dofShader.id == 0) {
-        printf("Failed to compile DoF shader\n");
-        return -1;
-    }
-    float blurRadius = 3.0f;  // Control the blur strength
+    float blurRadius = 3.0f;
     float resolution[2] = {(float)screenWidth, (float)screenHeight};
     SetShaderValue(dofShader, GetShaderLocation(dofShader, "resolution"), resolution, SHADER_UNIFORM_VEC2);
     SetShaderValue(dofShader, GetShaderLocation(dofShader, "radius"), &blurRadius, SHADER_UNIFORM_FLOAT);
-    int resolutionLoc = GetShaderLocation(dofShader, "resolution");
-    int radiusLoc = GetShaderLocation(dofShader, "radius");
-    if (resolutionLoc == -1 || radiusLoc == -1) {
-        printf("Failed to get shader uniform locations\n");
-        return -1;
-    }
 
+    return dofShader;
+}
 
-    rl::Shader shadowShader (TextFormat("resources/shaders/lighting.vs", GLSL_VERSION),
-                       TextFormat("resources/shaders/lighting.fs", GLSL_VERSION));
-    // Get some required shader locations
+rl::Shader SetupShadowShader(vec3& lightDir) {
+    rl::Shader shadowShader(TextFormat("resources/shaders/lighting.vs", GLSL_VERSION),
+                            TextFormat("resources/shaders/lighting.fs", GLSL_VERSION));
     shadowShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shadowShader, "viewPos");
-    Vector3 lightDir = Vector3Normalize((Vector3){ 0.35f, -1.0f, -0.35f });
     Color lightColor = WHITE;
     Vector4 lightColorNormalized = ColorNormalize(lightColor);
     int lightDirLoc = GetShaderLocation(shadowShader, "lightDir");
@@ -84,63 +77,72 @@ int main(void) {
     int shadowMapResolution = SHADOWMAP_RESOLUTION;
     SetShaderValue(shadowShader, GetShaderLocation(shadowShader, "shadowMapResolution"), &shadowMapResolution, SHADER_UNIFORM_INT);
 
+    return shadowShader;
+}
 
-    Player player = Player(
-        vec3{0.0,1.0,0.0},
-        0.2,
-        shadowShader);
 
+std::vector<Animal> CreateAnimals(const rl::Shader& shadowShader, int count = 10) {
     std::vector<Animal> animals;
-    for (int i = 0; i < 10; i++) {  // Create 10 animals, for example
+    for (int i = 0; i < count; i++) {
         animals.push_back(Animal(vec3{GetRandomFloat(-25, 25), 1.0f, GetRandomFloat(-25, 25)}, 5.0f, shadowShader));
     }
+    return animals;
+}
 
-    Model cube = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
-    cube.materials[0].shader = shadowShader;
 
-    RenderTexture2D shadowMap = RenderUtils::LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
-    // For the shadowmapping algorithm, we will be rendering everything from the light's point of view
-    Camera3D lightCam = (Camera3D){ 0 };
-    lightCam.position = Vector3Normalize(vec3{-10.0, 70.0, 10.0});//Vector3Scale(lightDir, -15.0f);
-    lightCam.target = Vector3Zero();
-    // Use an orthographic projection for directional lights
-    lightCam.projection = CAMERA_ORTHOGRAPHIC;
-    lightCam.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    lightCam.fovy = 50.0f;
+void RenderShadowMap(Shader shadowShader, RenderTexture2D& shadowMap, Camera3D& lightCam, Model& cube, Player& player,
+                     std::vector<Animal>& animals) {
+        BeginTextureMode(shadowMap);
+        ClearBackground(WHITE);
+        BeginMode3D(lightCam);
+            Matrix lightViewProj = MatrixMultiply(rlGetMatrixModelview(), rlGetMatrixProjection());
+        SetShaderValueMatrix(shadowShader, GetShaderLocation(shadowShader, "lightVP"), lightViewProj);
+            RenderUtils::draw_scene(cube, player, animals);
+        EndMode3D();
+        EndTextureMode();
+}
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
-        int fc = 0;
+void RenderSceneToTexture(RenderTexture2D& dofTexture, Camera3D& camera, rl::Shader& shadowShader,
+                          RenderTexture2D& shadowMap, Model& cube, Player& player, std::vector<Animal>& animals) {
+    BeginTextureMode(dofTexture);
+    ClearBackground(RAYWHITE);
 
-    SetExitKey(KEY_NULL);
-    //--------------------------------------------------------------------------------------
+    rlEnableShader(shadowShader.id);
+    int slot = 10;
+    rlActiveTextureSlot(10);
+    rlEnableTexture(shadowMap.depth.id);
+    rlSetUniform(GetShaderLocation(shadowShader, "shadowMap"), &slot, SHADER_UNIFORM_INT, 1);
 
-    // Main game loop
+    rlDisableShader();
+    BeginMode3D(camera);
+    RenderUtils::draw_scene(cube, player, animals);
+    EndMode3D();
+
+    EndTextureMode();
+}
+
+
+void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Animal>& animals, Model& cube,
+              RenderTexture2D& shadowMap, Camera3D& lightCam, rl::Shader& shadowShader,
+              rl::Shader& dofShader, RenderTexture2D& dofTexture) {
     while (!WindowShouldClose()) {
-        // Update
-        //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
+        float dt = GetFrameTime();
 
-        if (IsWindowResized() && !IsWindowFullscreen()) {
-            screenWidth = GetScreenWidth();
-            screenHeight = GetScreenHeight();
-        }
-
-         float dt = GetFrameTime();
-
-      handle_collisions(player, animals);
-      player.tether.update(camera);
-      player.update();
-      player.rope.update(player.pos, player.tether.pos);
+        // Update game state
+        handle_collisions(player, animals);
+        player.tether.update(camera);
+        player.update();
+        player.rope.update(player.pos, player.tether.pos);
         for (auto& animal : animals) {
             animal.update();
         }
-      RenderUtils::update_camera(camera, player);
+        RenderUtils::update_camera(camera, player);
 
+        // Update shaders
         Vector3 cameraPos = camera.position;
         SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
 
-                const float cameraSpeed = 0.05f;
+        const float cameraSpeed = 0.05f;
         if (IsKeyDown(KEY_LEFT))
         {
             if (lightDir.x < 0.6f)
@@ -163,75 +165,71 @@ int main(void) {
         }
         lightDir = Vector3Normalize(lightDir);
         lightCam.position = Vector3Scale(lightDir, -15.0f);
+        int lightDirLoc = GetShaderLocation(shadowShader, "lightDir");
         SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
 
+        RenderShadowMap(shadowShader, shadowMap, lightCam, cube, player, animals);
 
-        // Draw
-        //----------------------------------------------------------------------------------
-        Matrix lightView;
-        Matrix lightProj;
-        BeginTextureMode(shadowMap);
-        ClearBackground(WHITE);
-        BeginMode3D(lightCam);
-            lightView = rlGetMatrixModelview();
-            lightProj = rlGetMatrixProjection();
-            RenderUtils::draw_scene(cube, player, animals);
-        EndMode3D();
-        EndTextureMode();
-
-        BeginTextureMode(dofTexture);
-            Matrix lightViewProj = MatrixMultiply(lightView, lightProj);
+        // Render scene
+        RenderSceneToTexture(dofTexture, camera, shadowShader, shadowMap, cube, player, animals);
 
 
-            ClearBackground(RAYWHITE);
-
-            SetShaderValueMatrix(shadowShader, lightVPLoc, lightViewProj);
-
-            rlEnableShader(shadowShader.id);
-            int slot = 10; // Can be anything 0 to 15, but 0 will probably be taken up
-            rlActiveTextureSlot(10);
-            rlEnableTexture(shadowMap.depth.id);
-            rlSetUniform(shadowMapLoc, &slot, SHADER_UNIFORM_INT, 1);
-
-            rlDisableShader();
-            BeginMode3D(camera);
-
-            // Update light values (ensure this is called in the main game loop)
-                RenderUtils::draw_scene(cube, player, animals);
-
-            EndMode3D();
-
-        EndTextureMode();
-
+        // Render final image
         BeginDrawing();
             ClearBackground(RAYWHITE);
-
-    // Use the blur shader
             BeginShaderMode(dofShader);
-                // Draw the render texture to the screen with the shader
                 DrawTexture(dofTexture.texture, 0, 0, WHITE);
-
             EndShaderMode();
             DrawText("Welcome to the third dimension!", 10, 40, 20, DARKGRAY);
-
             DrawFPS(10, 10);
         EndDrawing();
-        //----------------------------------------------------------------------------------
+    }
+}
+
+
+int main(void) {
+    int screenWidth = 1280;
+    int screenHeight = 720;
+
+    try {
+        InitializeWindow(screenWidth, screenHeight);
+
+        vec3 lightDir = Vector3Normalize((Vector3){ 0.35f, -1.0f, -0.35f });
+        Camera3D camera = SetupCamera();
+        RenderTexture2D dofTexture = SetupDofTexture(screenWidth, screenHeight);
+        rl::Shader dofShader = SetupDofShader(screenWidth, screenHeight);
+        rl::Shader shadowShader = SetupShadowShader(lightDir);
+
+        Player player(vec3{0.0,1.0,0.0}, 0.2, shadowShader);
+        std::vector<Animal> animals = CreateAnimals(shadowShader);
+
+        Model cube = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
+        cube.materials[0].shader = shadowShader;
+
+        RenderTexture2D shadowMap = RenderUtils::LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
+        //Camera3D lightCam = RenderUtils::SetupLightCamera();
+        Camera3D lightCam = (Camera3D){ 0 };
+        lightCam.position = Vector3Normalize(vec3{-10.0, 70.0, 10.0});//Vector3Scale(lightDir, -15.0f);
+        lightCam.target = Vector3Zero();
+        // Use an orthographic projection for directional lights
+        lightCam.projection = CAMERA_ORTHOGRAPHIC;
+        lightCam.up = (Vector3){ 0.0f, 1.0f, 0.0f };
+        lightCam.fovy = 50.0f;
+
+
+        SetTargetFPS(60);
+                int fc = 0;
+
+        SetExitKey(KEY_NULL);
+
+        GameLoop(lightDir, camera, player, animals, cube, shadowMap, lightCam, shadowShader, dofShader, dofTexture);
+
+        RenderUtils::UnloadResources(shadowShader, player, animals, shadowMap, cube, dofShader, dofTexture);
+    }
+    catch (const std::exception& e) {
+        TraceLog(LOG_ERROR, "An error occurred: %s", e.what());
     }
 
-    RenderUtils::UnloadResources(
-        shadowShader,
-        player,
-        animals,
-        shadowMap,
-        cube,
-        dofShader,
-        dofTexture
-    );
-
-    //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
-
+    CloseWindow();
     return 0;
 }

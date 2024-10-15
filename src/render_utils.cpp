@@ -47,8 +47,8 @@ namespace RenderUtils {
 
     void draw_scene(Model cube, Player player, std::vector<Animal> animals) {
         DrawModelEx(cube,
+            (Vector3) { 0.0f, -0.5f, 0.0f },
             Vector3Zero(),
-            (Vector3) { 0.0f, -1.0f, 0.0f },
             0.0f,
             (Vector3) { 40.0f, 1.0f, 40.0f },
             (Color) {50, 168, 82, 255}
