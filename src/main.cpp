@@ -6,6 +6,8 @@
 #include "animal.h"
 #include "physics.h"
 #include "render_utils.h"
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 
 #include <random>
 #include <limits>
@@ -25,7 +27,8 @@ std::vector<Animal> CreateAnimals(const rl::Shader& shadowShader, int count = 10
 
 void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Animal>& animals, Model& cube,
               RenderTexture2D& shadowMap, Camera3D& lightCam, rl::Shader& shadowShader,
-              rl::Shader& dofShader, RenderTexture2D& dofTexture, int screenWidth, int screenHeight) {
+              rl::Shader& dofShader, RenderTexture2D& dofTexture, int screenWidth, int screenHeight,
+              GameState GameState) {
 
     float accumulator = 0.0;
     int substeps = 8;
@@ -36,7 +39,7 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Anima
         while (accumulator >= PHYSICS_TIME) {
             // Update game state
             handle_collisions(player, animals, substeps);
-            player.tether.update(camera);
+            player.tether.update(camera, GameState, player.pos);
             player.update();
             player.rope.update(player.pos, player.tether.pos);
             for (auto& animal : animals) {
@@ -90,6 +93,7 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Anima
                 DrawTexture(dofTexture.texture, 0, 0, WHITE);
             EndShaderMode();
             DrawText("Welcome to the third dimension!", 10, 40, 20, DARKGRAY);
+            RenderUtils::DrawGUI(GameState, screenWidth, screenHeight);
             DrawFPS(10, 10);
         EndDrawing();
     }
@@ -100,6 +104,7 @@ int main(void) {
     int screenWidth = 1280;
     int screenHeight = 720;
 
+    GameState GameState;
     try {
 
 
@@ -145,7 +150,8 @@ int main(void) {
             dofShader,
             dofTexture,
             screenWidth,
-            screenHeight
+            screenHeight,
+            GameState
         );
 
         RenderUtils::UnloadResources(shadowShader, player, animals, shadowMap, cube, dofShader, dofTexture);

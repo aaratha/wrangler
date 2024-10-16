@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 project(wrangler)
-
 set(CMAKE_CXX_STANDARD 17)
-
 
 # raylib
 find_package(raylib QUIET)
@@ -32,17 +30,30 @@ if (NOT raylib_cpp_FOUND)
     FetchContent_MakeAvailable(raylib_cpp)
 endif()
 
+# raygui
+include(FetchContent)
+FetchContent_Declare(
+    raygui
+    GIT_REPOSITORY https://github.com/raysan5/raygui.git
+    GIT_TAG 4.0
+    GIT_SHALLOW 1
+)
+FetchContent_GetProperties(raygui)
+if (NOT raygui_POPULATED)
+    FetchContent_Populate(raygui)
+endif()
+
 # This is the main part:
 set(SOURCES src/main.cpp src/player.cpp src/utils.cpp src/animal.cpp src/physics.cpp src/render_utils.cpp)
 add_executable(${PROJECT_NAME} ${SOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 11)
 target_link_libraries(${PROJECT_NAME} PUBLIC raylib raylib_cpp)
+target_include_directories(${PROJECT_NAME} PRIVATE ${raylib_SOURCE_DIR}/src ${raygui_SOURCE_DIR}/src)
 
 # Web Configurations
 if (${PLATFORM} STREQUAL "Web")
     # Tell Emscripten to build an example.html file.
     set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
-
     # Required linker flags for using Raylib with Emscripten
     target_link_options(${PROJECT_NAME} PRIVATE -sEXPORTED_FUNCTIONS=['_main','_malloc'] -sEXPORTED_RUNTIME_METHODS=ccall -sUSE_GLFW=3)
 endif()

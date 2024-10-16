@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "raylib-cpp.hpp"
 #include "rlgl.h"
+#include "raygui.h"
 #include "player.h"
 #include "animal.h"
 #include <vector>
@@ -64,4 +65,6 @@ namespace RenderUtils {
     );
 
     void HandleWindowResize(int& screenWidth, int& screenHeight, RenderTexture2D& dofTexture, Shader& dofShader);
+
+    void DrawGUI(GameState& GameState, int& screenWidth, int& screenHeight);
 }

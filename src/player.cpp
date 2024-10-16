@@ -8,8 +8,12 @@ Tether::Tether(Shader shader) : shader(shader) {
     model.materials[0].shader = shader;
 }
 
-void Tether::update(const Camera3D& camera) {
+void Tether::update(const Camera3D& camera, GameState GameState, vec3 playerPos) {
     // Get mouse position
+    float maxDistance = 3.0;
+    if (GameState.itemActive == 0) {
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) maxDistance = 10.0;
+    }
     Vector2 mousePos = GetMousePosition();
 
     // Get the ray from the mouse position
@@ -26,8 +30,20 @@ void Tether::update(const Camera3D& camera) {
         ray.position.z + ray.direction.z * t
     };
 
-    // Lerp to the intersection point
-    pos = lerp3D(pos, intersection, 0.3f);
+     // Calculate direction from player to intersection
+    Vector3 direction = Vector3Subtract(intersection, playerPos);
+
+    // Limit the distance
+    float distance = Vector3Length(direction);
+    if (distance > maxDistance) {
+        direction = Vector3Scale(Vector3Normalize(direction), maxDistance);
+    }
+
+    // Calculate new position
+    Vector3 newPos = Vector3Add(playerPos, direction);
+
+    // Lerp to the new position
+    pos = lerp3D(pos, newPos, 0.3f);
     model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
 }
 

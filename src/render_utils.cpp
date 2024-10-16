@@ -209,4 +209,20 @@ namespace RenderUtils {
             rlViewport(0, 0, screenWidth, screenHeight);
         }
     }
+
+    void DrawGUI(GameState& GameState, int& screenWidth, int& screenHeight) {
+        int width = 40;
+        int height = 40;
+        int margin = 20;
+        GuiToggleGroup(
+            (Rectangle) {
+                screenWidth-width-margin,
+                screenHeight-(4.05*height)-margin,
+                width,
+                height
+            },
+            "#1#\n#3#\n#8#\n#23#",
+            &GameState.itemActive
+        );
+    }
 }
