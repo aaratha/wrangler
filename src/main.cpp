@@ -12,6 +12,7 @@
 #include <vector>
 #include <array>
 
+const float PHYSICS_TIME = 1.0/60.0;
 
 std::vector<Animal> CreateAnimals(const rl::Shader& shadowShader, int count = 10) {
     std::vector<Animal> animals;
@@ -25,43 +26,50 @@ std::vector<Animal> CreateAnimals(const rl::Shader& shadowShader, int count = 10
 void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Animal>& animals, Model& cube,
               RenderTexture2D& shadowMap, Camera3D& lightCam, rl::Shader& shadowShader,
               rl::Shader& dofShader, RenderTexture2D& dofTexture) {
+
+    float accumulator = 0.0;
+    int substeps = 8;
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
 
-        // Update game state
-        handle_collisions(player, animals);
-        player.tether.update(camera);
-        player.update();
-        player.rope.update(player.pos, player.tether.pos);
-        for (auto& animal : animals) {
-            animal.update();
-        }
-        RenderUtils::update_camera(camera, player);
+        accumulator += dt;
+        while (accumulator >= PHYSICS_TIME) {
+            // Update game state
+            handle_collisions(player, animals, substeps);
+            player.tether.update(camera);
+            player.update();
+            player.rope.update(player.pos, player.tether.pos);
+            for (auto& animal : animals) {
+                animal.update();
+            }
+            RenderUtils::update_camera(camera, player);
 
-        // Update shaders
-        Vector3 cameraPos = camera.position;
-        SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
+            // Update shaders
+            Vector3 cameraPos = camera.position;
+            SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
 
-        const float cameraSpeed = 0.05f;
-        if (IsKeyDown(KEY_LEFT))
-        {
-            if (lightDir.x < 0.6f)
-                lightDir.x += cameraSpeed * 60.0f * dt;
-        }
-        if (IsKeyDown(KEY_RIGHT))
-        {
-            if (lightDir.x > -0.6f)
-                lightDir.x -= cameraSpeed * 60.0f * dt;
-        }
-        if (IsKeyDown(KEY_UP))
-        {
-            if (lightDir.z < 0.6f)
-                lightDir.z += cameraSpeed * 60.0f * dt;
-        }
-        if (IsKeyDown(KEY_DOWN))
-        {
-            if (lightDir.z > -0.6f)
-                lightDir.z -= cameraSpeed * 60.0f * dt;
+            const float cameraSpeed = 0.05f;
+            if (IsKeyDown(KEY_LEFT))
+            {
+                if (lightDir.x < 0.6f)
+                    lightDir.x += cameraSpeed * 60.0f * dt;
+            }
+            if (IsKeyDown(KEY_RIGHT))
+            {
+                if (lightDir.x > -0.6f)
+                    lightDir.x -= cameraSpeed * 60.0f * dt;
+            }
+            if (IsKeyDown(KEY_UP))
+            {
+                if (lightDir.z < 0.6f)
+                    lightDir.z += cameraSpeed * 60.0f * dt;
+            }
+            if (IsKeyDown(KEY_DOWN))
+            {
+                if (lightDir.z > -0.6f)
+                    lightDir.z -= cameraSpeed * 60.0f * dt;
+            }
+            accumulator -= PHYSICS_TIME;
         }
         lightDir = Vector3Normalize(lightDir);
         lightCam.position = Vector3Scale(lightDir, -15.0f);
@@ -92,6 +100,8 @@ int main(void) {
     int screenHeight = 720;
 
     try {
+
+
         RenderUtils::InitializeWindow(screenWidth, screenHeight);
 
         vec3 lightDir = Vector3Normalize((Vector3){ 0.35f, -1.0f, -0.35f });
@@ -117,7 +127,7 @@ int main(void) {
         lightCam.fovy = 50.0f;
 
 
-        SetTargetFPS(60);
+        SetTargetFPS(165);
                 int fc = 0;
 
         SetExitKey(KEY_NULL);
