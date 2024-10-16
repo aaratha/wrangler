@@ -18,7 +18,7 @@ void main() {
     vec2 correctedCoord = vec2(fragTexCoord.x, 1.0 - fragTexCoord.y);
 
     // Calculate the vertical distance from the center of the screen (normalized)
-    float verticalDistance = abs((fragTexCoord.y - 0.5) * 2.0);
+    float verticalDistance = abs((fragTexCoord.y - 0.5) * 1.5);
 
     // Interpolate the blur radius: 0 at the center, maxRadius at the top/bottom
     float dynamicRadius = mix(0.0, radius, verticalDistance);

@@ -62,4 +62,6 @@ namespace RenderUtils {
         Player& player,
         std::vector<Animal>& animals
     );
+
+    void HandleWindowResize(int& screenWidth, int& screenHeight, RenderTexture2D& dofTexture, Shader& dofShader);
 }

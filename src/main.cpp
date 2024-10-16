@@ -25,7 +25,7 @@ std::vector<Animal> CreateAnimals(const rl::Shader& shadowShader, int count = 10
 
 void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Animal>& animals, Model& cube,
               RenderTexture2D& shadowMap, Camera3D& lightCam, rl::Shader& shadowShader,
-              rl::Shader& dofShader, RenderTexture2D& dofTexture) {
+              rl::Shader& dofShader, RenderTexture2D& dofTexture, int screenWidth, int screenHeight) {
 
     float accumulator = 0.0;
     int substeps = 8;
@@ -81,6 +81,7 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Anima
         // Render scene
         RenderUtils::RenderSceneToTexture(dofTexture, camera, shadowShader, shadowMap, cube, player, animals);
 
+        RenderUtils::HandleWindowResize(screenWidth, screenHeight, dofTexture, dofShader);
 
         // Render final image
         BeginDrawing();
@@ -132,7 +133,20 @@ int main(void) {
 
         SetExitKey(KEY_NULL);
 
-        GameLoop(lightDir, camera, player, animals, cube, shadowMap, lightCam, shadowShader, dofShader, dofTexture);
+        GameLoop(
+            lightDir,
+            camera,
+            player,
+            animals,
+            cube,
+            shadowMap,
+            lightCam,
+            shadowShader,
+            dofShader,
+            dofTexture,
+            screenWidth,
+            screenHeight
+        );
 
         RenderUtils::UnloadResources(shadowShader, player, animals, shadowMap, cube, dofShader, dofTexture);
     }

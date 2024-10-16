@@ -192,4 +192,21 @@ namespace RenderUtils {
         EndTextureMode();
     }
 
+    void HandleWindowResize(int& screenWidth, int& screenHeight, RenderTexture2D& dofTexture, Shader& dofShader) {
+        if (IsWindowResized()) {
+            screenWidth = GetScreenWidth();
+            screenHeight = GetScreenHeight();
+
+            // Re-create the DOF texture with the new screen size
+            UnloadRenderTexture(dofTexture);
+            dofTexture = RenderUtils::SetupDofTexture(screenWidth, screenHeight);
+
+            // Re-apply the resolution to the shader
+            float resolution[2] = { (float)screenWidth, (float)screenHeight };
+            SetShaderValue(dofShader, GetShaderLocation(dofShader, "resolution"), resolution, SHADER_UNIFORM_VEC2);
+
+            // Update the viewport to match the new window size
+            rlViewport(0, 0, screenWidth, screenHeight);
+        }
+    }
 }
