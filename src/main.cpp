@@ -41,7 +41,7 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Anima
         while (accumulator >= PHYSICS_TIME) {
             // Update game state
             GameState.mouse_proj = project_mouse(1.0, camera);
-            handle_collisions(player, animals, substeps);
+            handle_collisions(player, animals, substeps, GameState.pens);
             player.tether.update(camera, GameState, player.pos);
             player.update();
             player.rope.update(player.pos, player.tether.pos);

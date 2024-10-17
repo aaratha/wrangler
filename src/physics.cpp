@@ -1,7 +1,12 @@
 #include "physics.h"
 
 
-void handle_collisions(Player& player, std::vector<Animal>& animals, int& substeps) {
+void handle_collisions(
+    Player& player,
+    std::vector<Animal>& animals,
+    int& substeps,
+    std::vector<std::unique_ptr<Pen>>& pens
+) {
     const float playerRadius = 1.5f; // Assuming the player cube has a side length of 2.0
     const float animalRadius = 0.5f; // From the Animal constructor
     const float tetherRadius = 0.5f; // From the Tether constructor
@@ -32,7 +37,21 @@ void handle_collisions(Player& player, std::vector<Animal>& animals, int& subste
             }
         }
 
-
+        for (auto& animal : animals) {
+            for (int i = 0; i < pens.size(); i++) {
+                for (int j = 0; j < pens[i]->points.size() - 1; j++) {  // Fix j++
+                    vec3 point = vec2to3(pens[i]->points[j], 1.0f);
+                    vec3 point_next = vec2to3(pens[i]->points[j + 1], 1.0f);
+                    if (CheckCollisionPointLine(animal.pos, point, point_next, ropeSegmentRadius)) {
+                        // Handle rope-animal collision
+                        vec3 closestPoint = GetClosestPointOnLineFromPoint(animal.pos, point, point_next);
+                        vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animal.pos, closestPoint));
+                        float overlap = ropeSegmentRadius + animalRadius - Vector3Distance(closestPoint, animal.pos);
+                        animal.targ = Vector3Add(animal.targ, Vector3Scale(collisionNormal, overlap * 0.8f));
+                    }
+                }
+            }
+        }
         // Player tether vs Animals
         for (auto& animal : animals) {
             if (CheckCollisionSpheres(player.tether.pos, tetherRadius, animal.pos, animalRadius)) {

@@ -72,7 +72,6 @@ for (int i=0; i<points.size() -1; i++) {
 }
 
 
-
 void handle_building(GameState& gameState, Camera3D camera) {
     Vector2 mousePos = GetMousePosition();
     Ray ray = GetMouseRay(mousePos, camera);
