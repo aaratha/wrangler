@@ -12,7 +12,7 @@ public:
 
   Tether(Shader shader);
 
-  void update(const Camera3D& camera, GameState GameState, vec3 playerPos);
+  void update(const Camera3D& camera, GameState& GameState, vec3 playerPos);
 
   void draw();
 };

@@ -44,7 +44,7 @@ if (NOT raygui_POPULATED)
 endif()
 
 # This is the main part:
-set(SOURCES src/main.cpp src/player.cpp src/utils.cpp src/animal.cpp src/physics.cpp src/render_utils.cpp)
+set(SOURCES src/main.cpp src/player.cpp src/utils.cpp src/animal.cpp src/physics.cpp src/render_utils.cpp src/buildings.cpp)
 add_executable(${PROJECT_NAME} ${SOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 11)
 target_link_libraries(${PROJECT_NAME} PUBLIC raylib raylib_cpp)

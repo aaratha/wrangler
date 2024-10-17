@@ -1,4 +1,12 @@
 #include "utils.h"
+#include "buildings.h"
+
+
+
+GameState::GameState() : toggleFence(false), itemActive(0), fence(new Fence), pens() {
+    // The unique_ptrs will automatically handle memory management
+}
+
 
 float lerp_to(float position, float target, float rate) {
     return position + (target - position) * rate;  // Lerp between position and target

@@ -5,7 +5,10 @@
 #include "raygui.h"
 #include "player.h"
 #include "animal.h"
+#include "buildings.h"
 #include <vector>
+#include <stdio.h>
+#include <cstring>  // For strncpy
 
 
 #if defined(PLATFORM_DESKTOP)
@@ -51,7 +54,8 @@ namespace RenderUtils {
         Camera3D& lightCam,
         Model& cube,
         Player& player,
-        std::vector<Animal>& animals
+        std::vector<Animal>& animals,
+        GameState& GameState
     );
 
     void RenderSceneToTexture(
@@ -61,7 +65,8 @@ namespace RenderUtils {
         RenderTexture2D& shadowMap,
         Model& cube,
         Player& player,
-        std::vector<Animal>& animals
+        std::vector<Animal>& animals,
+        GameState& GameState
     );
 
     void HandleWindowResize(int& screenWidth, int& screenHeight, RenderTexture2D& dofTexture, Shader& dofShader);

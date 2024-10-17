@@ -8,11 +8,11 @@ Tether::Tether(Shader shader) : shader(shader) {
     model.materials[0].shader = shader;
 }
 
-void Tether::update(const Camera3D& camera, GameState GameState, vec3 playerPos) {
+void Tether::update(const Camera3D& camera, GameState& GameState, vec3 playerPos) {
     // Get mouse position
-    float maxDistance = 3.0;
+    float maxDistance = 4.0;
     if (GameState.itemActive == 0) {
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) maxDistance = 10.0;
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) maxDistance = 15.0;
     }
     Vector2 mousePos = GetMousePosition();
 
@@ -120,7 +120,7 @@ void Rope::draw() {
             thickness,
             thickness,
             sides,
-            RED
+            WHITE
         ); // Draw a cylinder with base at startPos and top at endPos
     }
 }

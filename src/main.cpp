@@ -8,10 +8,12 @@
 #include "render_utils.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
+#include "buildings.h"
 
 #include <random>
 #include <limits>
 #include <vector>
+#include <iostream>
 #include <array>
 
 const float PHYSICS_TIME = 1.0/60.0;
@@ -28,13 +30,13 @@ std::vector<Animal> CreateAnimals(const rl::Shader& shadowShader, int count = 10
 void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Animal>& animals, Model& cube,
               RenderTexture2D& shadowMap, Camera3D& lightCam, rl::Shader& shadowShader,
               rl::Shader& dofShader, RenderTexture2D& dofTexture, int screenWidth, int screenHeight,
-              GameState GameState) {
-
+              GameState& GameState) {
     float accumulator = 0.0;
     int substeps = 8;
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
 
+        handle_building(GameState, camera);
         accumulator += dt;
         while (accumulator >= PHYSICS_TIME) {
             // Update game state
@@ -46,7 +48,6 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Anima
                 animal.update();
             }
             RenderUtils::update_camera(camera, player);
-
             // Update shaders
             Vector3 cameraPos = camera.position;
             SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
@@ -79,10 +80,10 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Anima
         int lightDirLoc = GetShaderLocation(shadowShader, "lightDir");
         SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
 
-        RenderUtils::RenderShadowMap(shadowShader, shadowMap, lightCam, cube, player, animals);
+        RenderUtils::RenderShadowMap(shadowShader, shadowMap, lightCam, cube, player, animals, GameState);
 
         // Render scene
-        RenderUtils::RenderSceneToTexture(dofTexture, camera, shadowShader, shadowMap, cube, player, animals);
+        RenderUtils::RenderSceneToTexture(dofTexture, camera, shadowShader, shadowMap, cube, player, animals, GameState);
 
         RenderUtils::HandleWindowResize(screenWidth, screenHeight, dofTexture, dofShader);
 

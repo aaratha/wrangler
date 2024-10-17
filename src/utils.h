@@ -1,20 +1,26 @@
 #pragma once
 
 #include "raylib-cpp.hpp"
+#include <memory>
 
 namespace rl = raylib;  // Create an alias for the raylib namespace
 using vec3 = rl::Vector3;  // Define vec3 as an alias for raylib's Vector3
+using vec2 = rl::Vector2;
 
 const float speed = 0.2;
 const vec3 CAMERA_OFFSET = {0.0, 15.0, 8.0};
+
+class Pen;
+class Fence;
 
 class GameState {
     public:
     bool toggleFence;
     int itemActive;
-    GameState() {
-      itemActive = 0;
-    };
+    std::unique_ptr<Fence> fence;  // Use unique_ptr for automatic memory management
+    std::vector<std::unique_ptr<Pen>> pens;  // Use unique_ptr here as well
+
+    GameState();
 };
 
 // Function declarations

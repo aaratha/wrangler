@@ -61,7 +61,7 @@ namespace RenderUtils {
         }
     }
 
-    void draw_scene(Model cube, Player player, std::vector<Animal> animals) {
+    void draw_scene(Model cube, Player player, std::vector<Animal> animals, GameState& GameState) {
         DrawModelEx(cube,
             (Vector3) { 0.0f, -0.5f, 0.0f },
             Vector3Zero(),
@@ -76,6 +76,13 @@ namespace RenderUtils {
         for (auto& animal : animals) {
             animal.draw();
         }
+        GameState.fence->draw();
+        for (const auto& pen : GameState.pens) {
+            if (pen) {  // Check if the unique_ptr is not null
+                pen->draw();  // Call the draw method of Pen
+            }
+        }
+        //GameState.pens.draw();
     }
 
     void update_camera(Camera3D& camera, Player player) {
@@ -162,19 +169,20 @@ namespace RenderUtils {
 
 
     void RenderShadowMap(Shader shadowShader, RenderTexture2D& shadowMap, Camera3D& lightCam, Model& cube, Player& player,
-                        std::vector<Animal>& animals) {
+                        std::vector<Animal>& animals, GameState& GameState) {
             BeginTextureMode(shadowMap);
             ClearBackground(WHITE);
             BeginMode3D(lightCam);
                 Matrix lightViewProj = MatrixMultiply(rlGetMatrixModelview(), rlGetMatrixProjection());
             SetShaderValueMatrix(shadowShader, GetShaderLocation(shadowShader, "lightVP"), lightViewProj);
-                RenderUtils::draw_scene(cube, player, animals);
+                RenderUtils::draw_scene(cube, player, animals, GameState);
             EndMode3D();
             EndTextureMode();
     }
 
     void RenderSceneToTexture(RenderTexture2D& dofTexture, Camera3D& camera, rl::Shader& shadowShader,
-                            RenderTexture2D& shadowMap, Model& cube, Player& player, std::vector<Animal>& animals) {
+                            RenderTexture2D& shadowMap, Model& cube, Player& player, std::vector<Animal>& animals,
+                              GameState& GameState) {
         BeginTextureMode(dofTexture);
         ClearBackground(RAYWHITE);
 
@@ -186,7 +194,7 @@ namespace RenderUtils {
 
         rlDisableShader();
         BeginMode3D(camera);
-        RenderUtils::draw_scene(cube, player, animals);
+        RenderUtils::draw_scene(cube, player, animals, GameState);
         EndMode3D();
 
         EndTextureMode();
