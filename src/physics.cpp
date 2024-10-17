@@ -24,7 +24,6 @@ void handle_collisions(
             }
         }
 
-        // Player rope vs Animals
         for (auto& animal : animals) {
             for (int i = 0; i < player.rope.num_points - 1; i++) {
                 if (CheckCollisionPointLine(animal.pos, player.rope.points[i], player.rope.points[i+1], ropeSegmentRadius)) {
@@ -33,6 +32,11 @@ void handle_collisions(
                     vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animal.pos, closestPoint));
                     float overlap = ropeSegmentRadius + animalRadius - Vector3Distance(closestPoint, animal.pos);
                     animal.targ = Vector3Add(animal.targ, Vector3Scale(collisionNormal, overlap*0.8));
+
+                    // Displace rope points
+                    vec3 displacementVector = Vector3Scale(collisionNormal, overlap * 0.2f);
+                    player.rope.points[i] = Vector3Subtract(player.rope.points[i], displacementVector);
+                    player.rope.points[i+1] = Vector3Subtract(player.rope.points[i+1], displacementVector);
                 }
             }
         }
