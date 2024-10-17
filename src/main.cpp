@@ -54,25 +54,30 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Anima
             SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
 
             const float cameraSpeed = 0.05f;
-            if (IsKeyDown(KEY_LEFT))
-            {
+            if (IsKeyDown(KEY_LEFT)) {
                 if (lightDir.x < 0.6f)
                     lightDir.x += cameraSpeed * 60.0f * dt;
             }
-            if (IsKeyDown(KEY_RIGHT))
-            {
+            if (IsKeyDown(KEY_RIGHT)) {
                 if (lightDir.x > -0.6f)
                     lightDir.x -= cameraSpeed * 60.0f * dt;
             }
-            if (IsKeyDown(KEY_UP))
-            {
+            if (IsKeyDown(KEY_UP)) {
                 if (lightDir.z < 0.6f)
                     lightDir.z += cameraSpeed * 60.0f * dt;
             }
-            if (IsKeyDown(KEY_DOWN))
-            {
+            if (IsKeyDown(KEY_DOWN)) {
                 if (lightDir.z > -0.6f)
                     lightDir.z -= cameraSpeed * 60.0f * dt;
+            }
+            if (IsKeyDown(KEY_ONE)) {
+                GameState.itemActive = 0;
+            }
+            if (IsKeyDown(KEY_TWO)) {
+                GameState.itemActive = 1;
+            }
+            if (IsKeyDown(KEY_THREE)) {
+                GameState.itemActive = 2;
             }
             accumulator -= PHYSICS_TIME;
         }
@@ -94,7 +99,6 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Anima
             BeginShaderMode(dofShader);
                 DrawTexture(dofTexture.texture, 0, 0, WHITE);
             EndShaderMode();
-            DrawText("Welcome to the third dimension!", 10, 40, 20, DARKGRAY);
             RenderUtils::DrawGUI(GameState, screenWidth, screenHeight);
             DrawFPS(10, 10);
         EndDrawing();

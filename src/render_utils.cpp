@@ -4,7 +4,7 @@ namespace RenderUtils {
 
     void InitializeWindow(int& screenWidth, int& screenHeight) {
         SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
-        InitWindow(screenWidth, screenHeight, "raylib [core] example - 3d camera mode");
+        InitWindow(screenWidth, screenHeight, "Wrangler");
     }
 
     Camera3D SetupCamera() {
