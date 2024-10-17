@@ -58,42 +58,6 @@ void Fence::draw(GameState& GameState) {
     DrawCircle3D(vec2to3(points[0], 1.0), joinDist, (Vector3){1.0, 0.0, 0.0}, 90, WHITE);
 }
 
-void Pen::update() {
-        start = playerPos;
-    end = tetherPos;
-    points[0] = start;
-    points[num_points - 1] = end;
-
-    for (int i = 1; i < num_points - 1; ++i) {
-        // Calculate the position difference from neighboring points
-        vec3 vec2prev = points[i] - points[i - 1];
-        vec3 vec2next = points[i + 1] - points[i];
-        float dist2prev = Vector3Length(vec2prev);
-        float dist2next = Vector3Length(vec2next);
-
-        // Constrain distances
-        if (dist2prev > constraint) {
-            vec2prev = Vector3Scale(Vector3Normalize(vec2prev), constraint);
-        }
-        if (dist2next > constraint) {
-            vec2next = Vector3Scale(Vector3Normalize(vec2next), constraint);
-        }
-
-        // Calculate the velocity based on the current and next position
-        vec3 newPos = (points[i - 1] + vec2prev + points[i + 1] - vec2next) / 2;
-        vec3 velocity = newPos - points[i];
-
-        // Apply friction to the velocity
-        velocity = Vector3Scale(velocity, friction);
-
-        // Update the point's position using the velocity
-        points[i] = points[i] + velocity;
-
-        // Optionally, store this velocity for the next update if needed
-        velocities[i] = velocity;
-    }
-
-}
 
 void Pen::draw() {
 for (int i=0; i<points.size() -1; i++) {

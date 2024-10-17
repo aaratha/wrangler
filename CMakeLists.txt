@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.14)
 project(wrangler)
+
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)  # Change to Debug if needed
+endif()
 
 # raylib
 find_package(raylib QUIET)
@@ -46,7 +52,6 @@ endif()
 # This is the main part:
 set(SOURCES src/main.cpp src/player.cpp src/utils.cpp src/animal.cpp src/physics.cpp src/render_utils.cpp src/buildings.cpp)
 add_executable(${PROJECT_NAME} ${SOURCES})
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 11)
 target_link_libraries(${PROJECT_NAME} PUBLIC raylib raylib_cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE ${raylib_SOURCE_DIR}/src ${raygui_SOURCE_DIR}/src)
 
