@@ -2,10 +2,11 @@
 
 Fence::Fence() {
     points.clear();  // Initialize points vector
+    joinDist = 1.0;
 }
 
 void Fence::place(vec2 point, std::vector<std::unique_ptr<Pen>>& pens) {
-    if (points.size() > 2 && Vector2Distance(point, points[0]) < 1.0f) {
+    if (points.size() > 2 && Vector2Distance(point, points[0]) < joinDist) {
       points.push_back(points[0]);
       pens.push_back(std::unique_ptr<Pen>(new Pen(points)));
       points.clear();
@@ -21,18 +22,40 @@ void Fence::undo() {
   }
 }
 
-void Fence::draw() {
+void Fence::draw(GameState& GameState) {
+    if (points.size() > 0) {
+        if (Vector2Distance(points[0], GameState.mouse_proj) > joinDist) {
+            DrawCylinderEx(
+                vec2to3(points.back(), 1.0),
+                vec2to3(GameState.mouse_proj, 1.0),
+                0.1f,
+                0.1f,
+                10,
+                WHITE
+            );
+        } else {
+            DrawCylinderEx(
+                vec2to3(points.back(), 1.0),
+                vec2to3(points[0], 1.0),
+                0.1f,
+                0.1f,
+                10,
+                WHITE
+            );
+        }
+    }
     if (points.size() < 2) return; // Avoid drawing if there are not enough points
     for (size_t i = 0; i < points.size() - 1; ++i) {
         DrawCylinderEx(
-            vec3{points[i].x, 1.0f, points[i].y},
-            vec3{points[i + 1].x, 1.0f, points[i + 1].y},
+            vec2to3(points[i], 1.0),
+            vec2to3(points[i+1], 1.0),
             0.1f,
             0.1f,
             10,
             WHITE
         );
     }
+    DrawCircle3D(vec2to3(points[0], 1.0), joinDist, (Vector3){1.0, 0.0, 0.0}, 90, WHITE);
 }
 
 void Pen::draw() {

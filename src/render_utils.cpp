@@ -61,7 +61,12 @@ namespace RenderUtils {
         }
     }
 
-    void draw_scene(Model cube, Player player, std::vector<Animal> animals, GameState& GameState) {
+    void draw_scene(
+        Model cube,
+        Player player,
+        std::vector<Animal> animals,
+        GameState& GameState
+    ) {
         DrawModelEx(cube,
             (Vector3) { 0.0f, -0.5f, 0.0f },
             Vector3Zero(),
@@ -76,7 +81,7 @@ namespace RenderUtils {
         for (auto& animal : animals) {
             animal.draw();
         }
-        GameState.fence->draw();
+        GameState.fence->draw(GameState);
         for (const auto& pen : GameState.pens) {
             if (pen) {  // Check if the unique_ptr is not null
                 pen->draw();  // Call the draw method of Pen
@@ -219,13 +224,13 @@ namespace RenderUtils {
     }
 
     void DrawGUI(GameState& GameState, int& screenWidth, int& screenHeight) {
-        int width = 40;
-        int height = 40;
-        int margin = 20;
+        float width = 40.0;
+        float height = 40.0;
+        float margin = 20.0;
         GuiToggleGroup(
             (Rectangle) {
-                screenWidth-width-margin,
-                screenHeight-(4.05*height)-margin,
+                static_cast<float>(screenWidth - width - margin),
+                static_cast<float>(screenHeight - (4.05 * height) - margin),
                 width,
                 height
             },

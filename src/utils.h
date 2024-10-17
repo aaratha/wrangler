@@ -19,6 +19,7 @@ class GameState {
     int itemActive;
     std::unique_ptr<Fence> fence;  // Use unique_ptr for automatic memory management
     std::vector<std::unique_ptr<Pen>> pens;  // Use unique_ptr here as well
+    vec2 mouse_proj;
 
     GameState();
 };
@@ -32,3 +33,7 @@ vec3 GetClosestPointOnLineFromPoint(vec3 point, vec3 lineStart, vec3 lineEnd);
 
 // Helper function to check collision between a point and a line segment
 bool CheckCollisionPointLine(vec3 point, vec3 lineStart, vec3 lineEnd, float threshold);
+
+vec3 vec2to3(vec2 vec2, float y);
+
+vec2 project_mouse(float y, Camera3D camera);

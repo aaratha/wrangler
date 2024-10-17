@@ -19,11 +19,11 @@ class Pen {
 class Fence {
   public:
   std::vector<vec2> points;
-
+  float joinDist;
   Fence();
   void place(vec2 point, std::vector<std::unique_ptr<Pen>>& pens);
   void undo();
-  void draw();
+  void draw(GameState& GameState);
 };
 
 

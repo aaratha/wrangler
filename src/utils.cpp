@@ -37,3 +37,25 @@ bool CheckCollisionPointLine(vec3 point, vec3 lineStart, vec3 lineEnd, float thr
     vec3 closest = GetClosestPointOnLineFromPoint(point, lineStart, lineEnd);
     return Vector3Distance(point, closest) <= threshold;
 }
+
+vec3 vec2to3(vec2 vec2, float y) {
+    return vec3{vec2.x, y, vec2.y};
+}
+
+
+vec2 project_mouse(float y, Camera3D camera) {
+    Vector2 mousePos = GetMousePosition();
+    Ray ray = GetMouseRay(mousePos, camera);
+
+    // Check if the ray intersects the ground (y = 0 plane)
+    if (ray.direction.y != 0) { // Prevent division by zero
+        float t = (1.0f - ray.position.y) / ray.direction.y; // Calculate parameter t for y = 1.0
+        if (t >= 0) { // Ensure the intersection is in front of the camera
+            vec2 intersection = {
+                ray.position.x + ray.direction.x * t,
+                ray.position.z + ray.direction.z * t
+            };
+            return intersection;
+        }
+    }
+}
