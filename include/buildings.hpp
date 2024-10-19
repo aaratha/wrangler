@@ -7,11 +7,21 @@
 
 
 class Pen {
-  public:
-  std::vector<vec2> points;
+private:
+public:
+  std::vector<vec3> fixed_points;
   std::vector<Animal> animals;
+  float rope_segment_length = 1.0f; // Desired length between rope points
+  float constraint = 0.4f; // Maximum distance between rope points
+  float friction = 0.99f; // Friction coefficient
+  float thickness = 0.1f; // Thickness of the rope
+  int sides = 8; //[<35;139;19M]
+  std::vector<std::vector<vec3>> rope_points;
+  std::vector<std::vector<vec3>> rope_velocities;
 
-  Pen(std::vector<vec2> points) : points(points) {};
+  void initializeRopePoints();
+  Pen(std::vector<vec3> points);
+  void update();
   void draw();
 };
 

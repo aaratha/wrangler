@@ -23,6 +23,7 @@ void handle_collisions(
             }
         }
 
+        // rope and animals
         for (auto& animal : GameState.animals) {
             for (int i = 0; i < GameState.player->rope.num_points - 1; i++) {
                 if (CheckCollisionPointLine(animal->pos, GameState.player->rope.points[i], GameState.player->rope.points[i+1], ropeSegmentRadius)) {
@@ -40,21 +41,37 @@ void handle_collisions(
             }
         }
 
+        // pens and animals
         for (auto& animal : GameState.animals) {
-            for (int i = 0; i < pens.size(); i++) {
-                for (int j = 0; j < pens[i]->points.size() - 1; j++) {  // Fix j++
-                    vec3 point = vec2to3(pens[i]->points[j], 1.0f);
-                    vec3 point_next = vec2to3(pens[i]->points[j + 1], 1.0f);
-                    if (CheckCollisionPointLine(animal->pos, point, point_next, ropeSegmentRadius)) {
-                        // Handle rope-animal collision
-                        vec3 closestPoint = GetClosestPointOnLineFromPoint(animal->pos, point, point_next);
-                        vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animal->pos, closestPoint));
-                        float overlap = ropeSegmentRadius + animalRadius - Vector3Distance(closestPoint, animal->pos);
-                        animal->targ = Vector3Add(animal->targ, Vector3Scale(collisionNormal, overlap * 0.8f));
+            for (auto& pen : GameState.pens) {
+                for (size_t i = 0; i < pen->rope_points.size(); ++i) {
+                    for (size_t j = 0; j < pen->rope_points[i].size() - 1; ++j) {
+                        vec3 start = pen->rope_points[i][j];
+                        vec3 end = pen->rope_points[i][j + 1];
+
+                        //if (CheckCollisionPointLine(animal->pos, start, end, ropeSegmentRadius)) {
+                        if (CheckCollisionSpheres(animal->pos, animalRadius, start, 0.2)) {
+                            vec3 closestPoint = GetClosestPointOnLineFromPoint(animal->pos, start, end);
+                            vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animal->pos, closestPoint));
+                            float overlap = ropeSegmentRadius + animalRadius - Vector3Distance(closestPoint, animal->pos);
+
+                            // Update animal target position
+                            animal->targ = Vector3Add(animal->targ, Vector3Scale(collisionNormal, overlap * 0.8f));
+
+                            // Displace rope points (except fixed points)
+                            vec3 displacementVector = Vector3Scale(collisionNormal, overlap * 0.2f);
+                            if (j > 0) {
+                                pen->rope_points[i][j] = Vector3Subtract(pen->rope_points[i][j], displacementVector);
+                            }
+                            if (j < pen->rope_points[i].size() - 2) {
+                                pen->rope_points[i][j + 1] = Vector3Subtract(pen->rope_points[i][j + 1], displacementVector);
+                            }
+                        }
                     }
                 }
             }
         }
+
         // Player tether vs Animals
         for (auto& animal : GameState.animals) {
             if (CheckCollisionSpheres(GameState.player->tether.pos, tetherRadius, animal->pos, animalRadius)) {
