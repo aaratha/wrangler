@@ -7,8 +7,7 @@
 #include <vector>
 
 void handle_collisions(
-    Player& player,
-    std::vector<Animal>& animals,
+    GameState& GameState,
     int& substeps,
     std::vector<std::unique_ptr<Pen>>& pens
 );

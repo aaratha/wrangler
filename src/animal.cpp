@@ -69,3 +69,15 @@ void Animal::update() {
 void Animal::draw() {
     DrawModel(model, Vector3Zero(), 1.0f, species.color);
 }
+
+std::vector<std::unique_ptr<Animal>> CreateAnimals(const rl::Shader& shadowShader, int count) {
+    std::vector<std::unique_ptr<Animal>> animals;
+    for (int i = 0; i < count; i++) {
+        animals.push_back(std::make_unique<Animal>(
+            vec3{GetRandomFloat(-25, 25), 1.0f, GetRandomFloat(-25, 25)},
+            5.0f,
+            shadowShader
+        ));
+    }
+    return animals;
+}

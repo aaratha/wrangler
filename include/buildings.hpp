@@ -6,7 +6,6 @@
 #include <vector>
 
 
-
 class Pen {
   public:
   std::vector<vec2> points;

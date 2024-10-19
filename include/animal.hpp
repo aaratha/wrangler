@@ -40,3 +40,5 @@ public:
     void update();
     void draw();
 };
+
+std::vector<std::unique_ptr<Animal>> CreateAnimals(const rl::Shader& shadowShader, int count);

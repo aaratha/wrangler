@@ -27,15 +27,14 @@ namespace RenderUtils {
     RenderTexture2D LoadShadowmapRenderTexture(int width, int height);
     void UnloadShadowmapRenderTexture(RenderTexture2D target);
 
-    void draw_scene(Model cube, Player player, std::vector<Animal> animals);
+    void draw_scene(Model cube, GameState& GameState);
 
-    void update_camera(Camera3D& camera, Player player);
+    void update_camera(Camera3D& camera, std::unique_ptr<Player>& player);
 
     void UnloadResources(
         Shader shadowShader,
-        Player player,
-        std::vector<Animal> animals,
         RenderTexture2D shadowMap,
+        GameState& GameState,
         Model cube,
         Shader dofShader,
         RenderTexture2D dofTexture
@@ -52,8 +51,6 @@ namespace RenderUtils {
         RenderTexture2D& shadowMap,
         Camera3D& lightCam,
         Model& cube,
-        Player& player,
-        std::vector<Animal>& animals,
         GameState& GameState
     );
 
@@ -63,8 +60,6 @@ namespace RenderUtils {
         rl::Shader& shadowShader,
         RenderTexture2D& shadowMap,
         Model& cube,
-        Player& player,
-        std::vector<Animal>& animals,
         GameState& GameState
     );
 

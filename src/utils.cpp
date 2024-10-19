@@ -1,9 +1,17 @@
 #include "utils.hpp"
 #include "buildings.hpp"
+#include "player.hpp"
+#include "animal.hpp"
 
 
 
-GameState::GameState() : toggleFence(false), itemActive(0), fence(new Fence), pens() {
+GameState::GameState(const rl::Shader& shadowShader) :
+    toggleFence(false),
+    itemActive(0),
+    player(std::make_unique<Player>(vec3{0.0,1.0,0.0}, 0.2, shadowShader)),
+    animals(CreateAnimals(shadowShader, 10)),
+    fence(std::make_unique<Fence>()),
+    pens() {
     // The unique_ptrs will automatically handle memory management
 }
 

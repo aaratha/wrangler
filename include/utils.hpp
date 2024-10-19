@@ -12,16 +12,20 @@ const vec3 CAMERA_OFFSET = {0.0, 15.0, 8.0};
 
 class Pen;
 class Fence;
+class Animal;
+class Player;
 
 class GameState {
     public:
     bool toggleFence;
     int itemActive;
+    std::unique_ptr<Player> player;
+    std::vector<std::unique_ptr<Animal>> animals;
     std::unique_ptr<Fence> fence;  // Use unique_ptr for automatic memory management
     std::vector<std::unique_ptr<Pen>> pens;  // Use unique_ptr here as well
     vec2 mouse_proj;
 
-    GameState();
+    GameState(const rl::Shader& shadowShader);
 };
 
 // Function declarations

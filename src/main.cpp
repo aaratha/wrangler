@@ -18,16 +18,9 @@
 
 const float PHYSICS_TIME = 1.0/60.0;
 
-std::vector<Animal> CreateAnimals(const rl::Shader& shadowShader, int count = 10) {
-    std::vector<Animal> animals;
-    for (int i = 0; i < count; i++) {
-        animals.push_back(Animal(vec3{GetRandomFloat(-25, 25), 1.0f, GetRandomFloat(-25, 25)}, 5.0f, shadowShader));
-    }
-    return animals;
-}
 
 
-void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Animal>& animals, Model& cube,
+void GameLoop(vec3 lightDir, Camera3D& camera, Model& cube,
               RenderTexture2D& shadowMap, Camera3D& lightCam, rl::Shader& shadowShader,
               rl::Shader& dofShader, RenderTexture2D& dofTexture, int screenWidth, int screenHeight,
               GameState& GameState) {
@@ -41,14 +34,14 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Anima
         while (accumulator >= PHYSICS_TIME) {
             // Update game state
             GameState.mouse_proj = project_mouse(1.0, camera);
-            handle_collisions(player, animals, substeps, GameState.pens);
-            player.tether.update(camera, GameState, player.pos);
-            player.update();
-            player.rope.update(player.pos, player.tether.pos);
-            for (auto& animal : animals) {
-                animal.update();
+            handle_collisions(GameState, substeps, GameState.pens);
+            GameState.player->tether.update(camera, GameState, GameState.player->pos);
+            GameState.player->update();
+            GameState.player->rope.update(GameState.player->pos, GameState.player->tether.pos);
+            for (auto& animal : GameState.animals) {
+                animal->update();
             }
-            RenderUtils::update_camera(camera, player);
+            RenderUtils::update_camera(camera, GameState.player);
             // Update shaders
             Vector3 cameraPos = camera.position;
             SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
@@ -86,10 +79,10 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Player& player, std::vector<Anima
         int lightDirLoc = GetShaderLocation(shadowShader, "lightDir");
         SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
 
-        RenderUtils::RenderShadowMap(shadowShader, shadowMap, lightCam, cube, player, animals, GameState);
+        RenderUtils::RenderShadowMap(shadowShader, shadowMap, lightCam, cube, GameState);
 
         // Render scene
-        RenderUtils::RenderSceneToTexture(dofTexture, camera, shadowShader, shadowMap, cube, player, animals, GameState);
+        RenderUtils::RenderSceneToTexture(dofTexture, camera, shadowShader, shadowMap, cube, GameState);
 
         RenderUtils::HandleWindowResize(screenWidth, screenHeight, dofTexture, dofShader);
 
@@ -110,9 +103,7 @@ int main(void) {
     int screenWidth = 1280;
     int screenHeight = 720;
 
-    GameState GameState;
     try {
-
 
         RenderUtils::InitializeWindow(screenWidth, screenHeight);
 
@@ -121,9 +112,7 @@ int main(void) {
         RenderTexture2D dofTexture = RenderUtils::SetupDofTexture(screenWidth, screenHeight);
         rl::Shader dofShader = RenderUtils::SetupDofShader(screenWidth, screenHeight);
         rl::Shader shadowShader = RenderUtils::SetupShadowShader(lightDir);
-
-        Player player(vec3{0.0,1.0,0.0}, 0.2, shadowShader);
-        std::vector<Animal> animals = CreateAnimals(shadowShader);
+        GameState GameState(shadowShader);
 
         Model cube = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
         cube.materials[0].shader = shadowShader;
@@ -147,8 +136,6 @@ int main(void) {
         GameLoop(
             lightDir,
             camera,
-            player,
-            animals,
             cube,
             shadowMap,
             lightCam,
@@ -160,7 +147,7 @@ int main(void) {
             GameState
         );
 
-        RenderUtils::UnloadResources(shadowShader, player, animals, shadowMap, cube, dofShader, dofTexture);
+        RenderUtils::UnloadResources(shadowShader, shadowMap, GameState, cube, dofShader, dofTexture);
     }
     catch (const std::exception& e) {
         TraceLog(LOG_ERROR, "An error occurred: %s", e.what());

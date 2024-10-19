@@ -64,8 +64,6 @@ namespace RenderUtils {
 
     void draw_scene(
         Model cube,
-        Player player,
-        std::vector<Animal> animals,
         GameState& GameState
     ) {
         DrawModelEx(cube,
@@ -75,12 +73,12 @@ namespace RenderUtils {
             (Vector3) { 40.0f, 1.0f, 40.0f },
             (Color) {50, 168, 82, 255}
         );
-        player.draw();
-        player.tether.draw();
-        player.rope.draw();
+        GameState.player->draw();
+        GameState.player->tether.draw();
+        GameState.player->rope.draw();
 
-        for (auto& animal : animals) {
-            animal.draw();
+        for (auto& animal : GameState.animals) {
+            animal->draw();
         }
         GameState.fence->draw(GameState);
         for (const auto& pen : GameState.pens) {
@@ -91,13 +89,13 @@ namespace RenderUtils {
         //GameState.pens.draw();
     }
 
-    void update_camera(Camera3D& camera, Player player) {
-        camera.target.x = lerp_to(camera.target.x, player.com.x, 0.2f);
-        camera.target.z = lerp_to(camera.target.z, player.com.z, 0.2f);
+    void update_camera(Camera3D& camera, std::unique_ptr<Player>& player) {
+        camera.target.x = lerp_to(camera.target.x, player->com.x, 0.2f);
+        camera.target.z = lerp_to(camera.target.z, player->com.z, 0.2f);
         camera.target.y = 0.0f;
         //camera.position = lerp3D(camera.position, player.com + vec3{0.0, 15.0, 8.0}, 0.9);
-        camera.position = player.pos + CAMERA_OFFSET;
-        camera.position.x = player.com.x + CAMERA_OFFSET.x;
+        camera.position = player->pos + CAMERA_OFFSET;
+        camera.position.x = player->com.x + CAMERA_OFFSET.x;
 
         #if defined(_WIN32) || defined(_WIN64)
             camera.fovy -= 3*GetMouseWheelMove();
@@ -110,18 +108,17 @@ namespace RenderUtils {
 
     void UnloadResources(
         Shader shadowShader,
-        Player player,
-        std::vector<Animal> animals,
         RenderTexture2D shadowMap,
+        GameState& GameState,
         Model cube,
         Shader dofShader,
         RenderTexture2D dofTexture
     ) {
         UnloadShader(shadowShader);
-        UnloadModel(player.model);
-        UnloadModel(player.tether.model);
-        for (auto& animal : animals) {
-            UnloadModel(animal.model);
+        UnloadModel(GameState.player->model);
+        UnloadModel(GameState.player->tether.model);
+        for (auto& animal : GameState.animals) {
+            UnloadModel(animal->model);
         }
         UnloadShadowmapRenderTexture(shadowMap);
         UnloadModel(cube);
@@ -174,21 +171,20 @@ namespace RenderUtils {
     }
 
 
-    void RenderShadowMap(Shader shadowShader, RenderTexture2D& shadowMap, Camera3D& lightCam, Model& cube, Player& player,
-                        std::vector<Animal>& animals, GameState& GameState) {
+    void RenderShadowMap(Shader shadowShader, RenderTexture2D& shadowMap, Camera3D& lightCam, Model& cube,
+                       GameState& GameState) {
             BeginTextureMode(shadowMap);
             ClearBackground(WHITE);
             BeginMode3D(lightCam);
                 Matrix lightViewProj = MatrixMultiply(rlGetMatrixModelview(), rlGetMatrixProjection());
             SetShaderValueMatrix(shadowShader, GetShaderLocation(shadowShader, "lightVP"), lightViewProj);
-                RenderUtils::draw_scene(cube, player, animals, GameState);
+            RenderUtils::draw_scene(cube, GameState);
             EndMode3D();
             EndTextureMode();
     }
 
     void RenderSceneToTexture(RenderTexture2D& dofTexture, Camera3D& camera, rl::Shader& shadowShader,
-                            RenderTexture2D& shadowMap, Model& cube, Player& player, std::vector<Animal>& animals,
-                              GameState& GameState) {
+                            RenderTexture2D& shadowMap, Model& cube, GameState& GameState) {
         BeginTextureMode(dofTexture);
         ClearBackground(RAYWHITE);
 
@@ -200,7 +196,7 @@ namespace RenderUtils {
 
         rlDisableShader();
         BeginMode3D(camera);
-        RenderUtils::draw_scene(cube, player, animals, GameState);
+        RenderUtils::draw_scene(cube, GameState);
         EndMode3D();
 
         EndTextureMode();
