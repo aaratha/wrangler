@@ -45,3 +45,7 @@ bool CheckCollisionPointLine(vec3 point, vec3 lineStart, vec3 lineEnd, float thr
 vec3 vec2to3(vec2 vec2, float y);
 
 vec2 project_mouse(float y, Camera3D camera);
+
+void update_lightDir(vec3& lightDir, float dt);
+
+void update_itemActive(int& itemActive);

@@ -72,3 +72,36 @@ vec2 project_mouse(float y, Camera3D camera) {
         }
     }
 }
+
+void update_lightDir(vec3& lightDir, float dt) {
+    const float cameraSpeed = 0.05f;
+    if (IsKeyDown(KEY_LEFT)) {
+        if (lightDir.x < 0.6f)
+            lightDir.x += cameraSpeed * 60.0f * dt;
+    }
+    if (IsKeyDown(KEY_RIGHT)) {
+        if (lightDir.x > -0.6f)
+            lightDir.x -= cameraSpeed * 60.0f * dt;
+    }
+    if (IsKeyDown(KEY_UP)) {
+        if (lightDir.z < 0.6f)
+            lightDir.z += cameraSpeed * 60.0f * dt;
+    }
+    if (IsKeyDown(KEY_DOWN)) {
+        if (lightDir.z > -0.6f)
+            lightDir.z -= cameraSpeed * 60.0f * dt;
+    }
+}
+
+void update_itemActive(int& itemActive) {
+    if (IsKeyDown(KEY_ONE)) {
+        itemActive = 0;
+    }
+    if (IsKeyDown(KEY_TWO)) {
+        itemActive = 1;
+    }
+    if (IsKeyDown(KEY_THREE)) {
+        itemActive = 2;
+    }
+
+}

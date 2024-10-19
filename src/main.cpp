@@ -46,32 +46,9 @@ void GameLoop(vec3 lightDir, RenderTexture2D& shadowMap, rl::Shader& shadowShade
             Vector3 cameraPos = GameState.camera.position;
             SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
 
-            const float cameraSpeed = 0.05f;
-            if (IsKeyDown(KEY_LEFT)) {
-                if (lightDir.x < 0.6f)
-                    lightDir.x += cameraSpeed * 60.0f * dt;
-            }
-            if (IsKeyDown(KEY_RIGHT)) {
-                if (lightDir.x > -0.6f)
-                    lightDir.x -= cameraSpeed * 60.0f * dt;
-            }
-            if (IsKeyDown(KEY_UP)) {
-                if (lightDir.z < 0.6f)
-                    lightDir.z += cameraSpeed * 60.0f * dt;
-            }
-            if (IsKeyDown(KEY_DOWN)) {
-                if (lightDir.z > -0.6f)
-                    lightDir.z -= cameraSpeed * 60.0f * dt;
-            }
-            if (IsKeyDown(KEY_ONE)) {
-                GameState.itemActive = 0;
-            }
-            if (IsKeyDown(KEY_TWO)) {
-                GameState.itemActive = 1;
-            }
-            if (IsKeyDown(KEY_THREE)) {
-                GameState.itemActive = 2;
-            }
+            update_lightDir(lightDir, dt);
+            update_itemActive(GameState.itemActive);
+
             accumulator -= PHYSICS_TIME;
         }
         lightDir = Vector3Normalize(lightDir);
