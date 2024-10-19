@@ -49,18 +49,39 @@ if (NOT raygui_POPULATED)
     FetchContent_Populate(raygui)
 endif()
 
-# This is the main part:
-set(SOURCES src/main.cpp src/player.cpp src/utils.cpp src/animal.cpp src/physics.cpp src/render_utils.cpp src/buildings.cpp)
+# Include directories for the project
+include_directories(
+    ${CMAKE_SOURCE_DIR}/include  # Include your headers
+    ${raylib_SOURCE_DIR}/src
+    ${raygui_SOURCE_DIR}/src
+)
+
+# Source files
+set(SOURCES
+    src/main.cpp
+    src/player.cpp
+    src/utils.cpp
+    src/animal.cpp
+    src/physics.cpp
+    src/render_utils.cpp
+    src/buildings.cpp
+)
+
+# Main executable target
 add_executable(${PROJECT_NAME} ${SOURCES})
+
+# Link libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC raylib raylib_cpp)
-target_include_directories(${PROJECT_NAME} PRIVATE ${raylib_SOURCE_DIR}/src ${raygui_SOURCE_DIR}/src)
 
 # Web Configurations
 if (${PLATFORM} STREQUAL "Web")
     # Tell Emscripten to build an example.html file.
     set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
     # Required linker flags for using Raylib with Emscripten
-    target_link_options(${PROJECT_NAME} PRIVATE -sEXPORTED_FUNCTIONS=['_main','_malloc'] -sEXPORTED_RUNTIME_METHODS=ccall -sUSE_GLFW=3)
+    target_link_options(${PROJECT_NAME} PRIVATE
+        -sEXPORTED_FUNCTIONS=['_main','_malloc']
+        -sEXPORTED_RUNTIME_METHODS=ccall
+        -sUSE_GLFW=3)
 endif()
 
-# That's it! You should have an example executable that you can run. Have fun!
+# Finished setup!
