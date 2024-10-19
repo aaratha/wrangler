@@ -24,6 +24,8 @@ namespace RenderUtils {
 
     Camera3D SetupCamera();
 
+    Camera3D SetupLightCamera();
+
     RenderTexture2D LoadShadowmapRenderTexture(int width, int height);
     void UnloadShadowmapRenderTexture(RenderTexture2D target);
 

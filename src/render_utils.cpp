@@ -18,6 +18,17 @@ namespace RenderUtils {
         return camera;
     }
 
+    Camera3D SetupLightCamera() {
+        Camera3D lightCam = (Camera3D){ 0 };
+        lightCam.position = Vector3Normalize(vec3{-10.0, 70.0, 10.0});//Vector3Scale(lightDir, -15.0f);
+        lightCam.target = Vector3Zero();
+        // Use an orthographic projection for directional lights
+        lightCam.projection = CAMERA_ORTHOGRAPHIC;
+        lightCam.up = (Vector3){ 0.0f, 1.0f, 0.0f };
+        lightCam.fovy = 50.0f;
+        return lightCam;
+    }
+
     RenderTexture2D LoadShadowmapRenderTexture(int width, int height)
     {
         RenderTexture2D target = { 0 };

@@ -20,8 +20,8 @@ const float PHYSICS_TIME = 1.0/60.0;
 
 
 
-void GameLoop(vec3 lightDir, Camera3D& camera, Model& cube,
-              RenderTexture2D& shadowMap, Camera3D& lightCam, rl::Shader& shadowShader,
+void GameLoop(vec3 lightDir, Model& cube,
+              RenderTexture2D& shadowMap, rl::Shader& shadowShader,
               rl::Shader& dofShader, RenderTexture2D& dofTexture, int screenWidth, int screenHeight,
               GameState& GameState) {
     float accumulator = 0.0;
@@ -29,21 +29,21 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Model& cube,
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
 
-        handle_building(GameState, camera);
+        handle_building(GameState, GameState.camera);
         accumulator += dt;
         while (accumulator >= PHYSICS_TIME) {
             // Update game state
-            GameState.mouse_proj = project_mouse(1.0, camera);
+            GameState.mouse_proj = project_mouse(1.0, GameState.camera);
             handle_collisions(GameState, substeps, GameState.pens);
-            GameState.player->tether.update(camera, GameState, GameState.player->pos);
+            GameState.player->tether.update(GameState.camera, GameState, GameState.player->pos);
             GameState.player->update();
             GameState.player->rope.update(GameState.player->pos, GameState.player->tether.pos);
             for (auto& animal : GameState.animals) {
                 animal->update();
             }
-            RenderUtils::update_camera(camera, GameState.player);
+            RenderUtils::update_camera(GameState.camera, GameState.player);
             // Update shaders
-            Vector3 cameraPos = camera.position;
+            Vector3 cameraPos = GameState.camera.position;
             SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos, SHADER_UNIFORM_VEC3);
 
             const float cameraSpeed = 0.05f;
@@ -75,14 +75,14 @@ void GameLoop(vec3 lightDir, Camera3D& camera, Model& cube,
             accumulator -= PHYSICS_TIME;
         }
         lightDir = Vector3Normalize(lightDir);
-        lightCam.position = Vector3Scale(lightDir, -15.0f);
+        GameState.lightCam.position = Vector3Scale(lightDir, -15.0f);
         int lightDirLoc = GetShaderLocation(shadowShader, "lightDir");
         SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
 
-        RenderUtils::RenderShadowMap(shadowShader, shadowMap, lightCam, cube, GameState);
+        RenderUtils::RenderShadowMap(shadowShader, shadowMap, GameState.lightCam, cube, GameState);
 
         // Render scene
-        RenderUtils::RenderSceneToTexture(dofTexture, camera, shadowShader, shadowMap, cube, GameState);
+        RenderUtils::RenderSceneToTexture(dofTexture, GameState.camera, shadowShader, shadowMap, cube, GameState);
 
         RenderUtils::HandleWindowResize(screenWidth, screenHeight, dofTexture, dofShader);
 
@@ -108,7 +108,6 @@ int main(void) {
         RenderUtils::InitializeWindow(screenWidth, screenHeight);
 
         vec3 lightDir = Vector3Normalize((Vector3){ 0.35f, -1.0f, -0.35f });
-        Camera3D camera = RenderUtils::SetupCamera();
         RenderTexture2D dofTexture = RenderUtils::SetupDofTexture(screenWidth, screenHeight);
         rl::Shader dofShader = RenderUtils::SetupDofShader(screenWidth, screenHeight);
         rl::Shader shadowShader = RenderUtils::SetupShadowShader(lightDir);
@@ -119,13 +118,6 @@ int main(void) {
 
         RenderTexture2D shadowMap = RenderUtils::LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
         //Camera3D lightCam = RenderUtils::SetupLightCamera();
-        Camera3D lightCam = (Camera3D){ 0 };
-        lightCam.position = Vector3Normalize(vec3{-10.0, 70.0, 10.0});//Vector3Scale(lightDir, -15.0f);
-        lightCam.target = Vector3Zero();
-        // Use an orthographic projection for directional lights
-        lightCam.projection = CAMERA_ORTHOGRAPHIC;
-        lightCam.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-        lightCam.fovy = 50.0f;
 
 
         SetTargetFPS(165);
@@ -135,10 +127,8 @@ int main(void) {
 
         GameLoop(
             lightDir,
-            camera,
             cube,
             shadowMap,
-            lightCam,
             shadowShader,
             dofShader,
             dofTexture,

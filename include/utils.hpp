@@ -19,6 +19,8 @@ class GameState {
     public:
     bool toggleFence;
     int itemActive;
+    Camera3D camera;
+    Camera3D lightCam;
     std::unique_ptr<Player> player;
     std::vector<std::unique_ptr<Animal>> animals;
     std::unique_ptr<Fence> fence;  // Use unique_ptr for automatic memory management

@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include "render_utils.hpp"
 #include "buildings.hpp"
 #include "player.hpp"
 #include "animal.hpp"
@@ -8,6 +9,8 @@
 GameState::GameState(const rl::Shader& shadowShader) :
     toggleFence(false),
     itemActive(0),
+    camera(RenderUtils::SetupCamera()),
+    lightCam(RenderUtils::SetupLightCamera()),
     player(std::make_unique<Player>(vec3{0.0,1.0,0.0}, 0.2, shadowShader)),
     animals(CreateAnimals(shadowShader, 10)),
     fence(std::make_unique<Fence>()),
