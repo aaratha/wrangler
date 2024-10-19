@@ -65,6 +65,7 @@ set(SOURCES
     src/physics.cpp
     src/render_utils.cpp
     src/buildings.cpp
+    src/terrain.cpp
 )
 
 # Main executable target

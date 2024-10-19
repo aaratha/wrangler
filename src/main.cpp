@@ -9,6 +9,7 @@
 #include "physics.hpp"
 #include "render_utils.hpp"
 #include "buildings.hpp"
+#include "terrain.hpp"
 
 #include <random>
 #include <limits>
@@ -20,8 +21,7 @@ const float PHYSICS_TIME = 1.0/60.0;
 
 
 
-void GameLoop(vec3 lightDir, Model& cube,
-              RenderTexture2D& shadowMap, rl::Shader& shadowShader,
+void GameLoop(vec3 lightDir, RenderTexture2D& shadowMap, rl::Shader& shadowShader,
               rl::Shader& dofShader, RenderTexture2D& dofTexture, int screenWidth, int screenHeight,
               GameState& GameState) {
     float accumulator = 0.0;
@@ -79,10 +79,10 @@ void GameLoop(vec3 lightDir, Model& cube,
         int lightDirLoc = GetShaderLocation(shadowShader, "lightDir");
         SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
 
-        RenderUtils::RenderShadowMap(shadowShader, shadowMap, GameState.lightCam, cube, GameState);
+        RenderUtils::RenderShadowMap(shadowShader, shadowMap, GameState.lightCam, GameState);
 
         // Render scene
-        RenderUtils::RenderSceneToTexture(dofTexture, GameState.camera, shadowShader, shadowMap, cube, GameState);
+        RenderUtils::RenderSceneToTexture(dofTexture, GameState.camera, shadowShader, shadowMap, GameState);
 
         RenderUtils::HandleWindowResize(screenWidth, screenHeight, dofTexture, dofShader);
 
@@ -113,8 +113,6 @@ int main(void) {
         rl::Shader shadowShader = RenderUtils::SetupShadowShader(lightDir);
         GameState GameState(shadowShader);
 
-        Model cube = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
-        cube.materials[0].shader = shadowShader;
 
         RenderTexture2D shadowMap = RenderUtils::LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
         //Camera3D lightCam = RenderUtils::SetupLightCamera();
@@ -127,7 +125,6 @@ int main(void) {
 
         GameLoop(
             lightDir,
-            cube,
             shadowMap,
             shadowShader,
             dofShader,
@@ -137,7 +134,7 @@ int main(void) {
             GameState
         );
 
-        RenderUtils::UnloadResources(shadowShader, shadowMap, GameState, cube, dofShader, dofTexture);
+        RenderUtils::UnloadResources(shadowShader, shadowMap, GameState, dofShader, dofTexture);
     }
     catch (const std::exception& e) {
         TraceLog(LOG_ERROR, "An error occurred: %s", e.what());

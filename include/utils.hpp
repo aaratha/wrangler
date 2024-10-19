@@ -14,6 +14,7 @@ class Pen;
 class Fence;
 class Animal;
 class Player;
+class Terrain;
 
 class GameState {
     public:
@@ -21,6 +22,7 @@ class GameState {
     int itemActive;
     Camera3D camera;
     Camera3D lightCam;
+    std::unique_ptr<Terrain> terrain;
     std::unique_ptr<Player> player;
     std::vector<std::unique_ptr<Animal>> animals;
     std::unique_ptr<Fence> fence;  // Use unique_ptr for automatic memory management

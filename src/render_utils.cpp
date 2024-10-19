@@ -74,16 +74,9 @@ namespace RenderUtils {
     }
 
     void draw_scene(
-        Model cube,
         GameState& GameState
     ) {
-        DrawModelEx(cube,
-            (Vector3) { 0.0f, -0.5f, 0.0f },
-            Vector3Zero(),
-            0.0f,
-            (Vector3) { 40.0f, 1.0f, 40.0f },
-            (Color) {50, 168, 82, 255}
-        );
+        GameState.terrain->draw();
         GameState.player->draw();
         GameState.player->tether.draw();
         GameState.player->rope.draw();
@@ -121,7 +114,6 @@ namespace RenderUtils {
         Shader shadowShader,
         RenderTexture2D shadowMap,
         GameState& GameState,
-        Model cube,
         Shader dofShader,
         RenderTexture2D dofTexture
     ) {
@@ -132,7 +124,7 @@ namespace RenderUtils {
             UnloadModel(animal->model);
         }
         UnloadShadowmapRenderTexture(shadowMap);
-        UnloadModel(cube);
+        UnloadModel(GameState.terrain->model);
         UnloadShader(dofShader);
         UnloadRenderTexture(dofTexture);
     }
@@ -182,20 +174,19 @@ namespace RenderUtils {
     }
 
 
-    void RenderShadowMap(Shader shadowShader, RenderTexture2D& shadowMap, Camera3D& lightCam, Model& cube,
-                       GameState& GameState) {
+    void RenderShadowMap(Shader shadowShader, RenderTexture2D& shadowMap, Camera3D& lightCam, GameState& GameState) {
             BeginTextureMode(shadowMap);
             ClearBackground(WHITE);
             BeginMode3D(lightCam);
                 Matrix lightViewProj = MatrixMultiply(rlGetMatrixModelview(), rlGetMatrixProjection());
             SetShaderValueMatrix(shadowShader, GetShaderLocation(shadowShader, "lightVP"), lightViewProj);
-            RenderUtils::draw_scene(cube, GameState);
+            RenderUtils::draw_scene(GameState);
             EndMode3D();
             EndTextureMode();
     }
 
     void RenderSceneToTexture(RenderTexture2D& dofTexture, Camera3D& camera, rl::Shader& shadowShader,
-                            RenderTexture2D& shadowMap, Model& cube, GameState& GameState) {
+                            RenderTexture2D& shadowMap, GameState& GameState) {
         BeginTextureMode(dofTexture);
         ClearBackground(RAYWHITE);
 
@@ -207,7 +198,7 @@ namespace RenderUtils {
 
         rlDisableShader();
         BeginMode3D(camera);
-        RenderUtils::draw_scene(cube, GameState);
+        RenderUtils::draw_scene(GameState);
         EndMode3D();
 
         EndTextureMode();

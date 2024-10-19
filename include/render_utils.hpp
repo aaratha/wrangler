@@ -5,6 +5,7 @@
 #include "player.hpp"
 #include "animal.hpp"
 #include "buildings.hpp"
+#include "terrain.hpp"
 #include <vector>
 #include <stdio.h>
 #include <cstring>  // For strncpy
@@ -29,7 +30,7 @@ namespace RenderUtils {
     RenderTexture2D LoadShadowmapRenderTexture(int width, int height);
     void UnloadShadowmapRenderTexture(RenderTexture2D target);
 
-    void draw_scene(Model cube, GameState& GameState);
+    void draw_scene(GameState& GameState);
 
     void update_camera(Camera3D& camera, std::unique_ptr<Player>& player);
 
@@ -37,7 +38,6 @@ namespace RenderUtils {
         Shader shadowShader,
         RenderTexture2D shadowMap,
         GameState& GameState,
-        Model cube,
         Shader dofShader,
         RenderTexture2D dofTexture
     );
@@ -52,7 +52,6 @@ namespace RenderUtils {
         Shader shadowShader,
         RenderTexture2D& shadowMap,
         Camera3D& lightCam,
-        Model& cube,
         GameState& GameState
     );
 
@@ -61,7 +60,6 @@ namespace RenderUtils {
         Camera3D& camera,
         rl::Shader& shadowShader,
         RenderTexture2D& shadowMap,
-        Model& cube,
         GameState& GameState
     );
 
