@@ -1,11 +1,10 @@
 #pragma once
-#include "utils.h"
+#include "utils.hpp"
 #include "raylib-cpp.hpp"
 #include "rlgl.h"
-#include "raygui.h"
-#include "player.h"
-#include "animal.h"
-#include "buildings.h"
+#include "player.hpp"
+#include "animal.hpp"
+#include "buildings.hpp"
 #include <vector>
 #include <stdio.h>
 #include <cstring>  // For strncpy

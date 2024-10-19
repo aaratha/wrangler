@@ -1,4 +1,4 @@
-#include "buildings.h"
+#include "buildings.hpp"
 
 Fence::Fence() {
     points.clear();  // Initialize points vector

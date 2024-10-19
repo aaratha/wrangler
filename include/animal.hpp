@@ -1,7 +1,7 @@
 #pragma once
 
 #include "raylib-cpp.hpp"
-#include "utils.h"
+#include "utils.hpp"
 
 #include <random>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils.h"
+#include "utils.hpp"
 #include "raylib-cpp.hpp"
 
 class Tether {

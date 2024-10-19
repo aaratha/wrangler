@@ -1,9 +1,9 @@
 #pragma once
 
-#include "player.h"
-#include "animal.h"
-#include "utils.h"
-#include "buildings.h"
+#include "player.hpp"
+#include "animal.hpp"
+#include "utils.hpp"
+#include "buildings.hpp"
 #include <vector>
 
 void handle_collisions(

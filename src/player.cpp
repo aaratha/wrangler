@@ -1,4 +1,4 @@
-#include "player.h"
+#include "player.hpp"
 
 Tether::Tether(Shader shader) : shader(shader) {
     pos = vec3{0.0, 1.0, 10.0};

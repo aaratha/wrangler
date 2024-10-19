@@ -1,4 +1,5 @@
-#include "render_utils.h"
+#include "render_utils.hpp"
+#include "raygui.h"
 
 namespace RenderUtils {
 

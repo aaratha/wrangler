@@ -1,14 +1,14 @@
 #include "raylib-cpp.hpp"
 #include "raymath.h"
 #include "rlgl.h"
-#include "utils.h"
-#include "player.h"
-#include "animal.h"
-#include "physics.h"
-#include "render_utils.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
-#include "buildings.h"
+#include "utils.hpp"
+#include "player.hpp"
+#include "animal.hpp"
+#include "physics.hpp"
+#include "render_utils.hpp"
+#include "buildings.hpp"
 
 #include <random>
 #include <limits>

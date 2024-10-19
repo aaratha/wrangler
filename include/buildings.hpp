@@ -1,8 +1,8 @@
 #pragma once
 
 #include "raylib-cpp.hpp"
-#include "utils.h"
-#include "animal.h"
+#include "utils.hpp"
+#include "animal.hpp"
 #include <vector>
 
 

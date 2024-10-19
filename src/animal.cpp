@@ -1,4 +1,4 @@
-#include "animal.h"
+#include "animal.hpp"
 
 
 Species::Species(SpeciesType type) : type(type) {
