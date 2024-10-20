@@ -104,14 +104,6 @@ void Fence::draw(GameState& GameState) {
                 10,
                 WHITE
             );
-            DrawCylinderEx(
-                vec2to3(points.back(), 0.0),
-                vec2to3(points.back(), 1.0),
-                0.1f,
-                0.1f,
-                8,
-                GRAY
-            );
         } else {
             DrawCylinderEx(
                 vec2to3(points.back(), 1.0),
@@ -120,14 +112,6 @@ void Fence::draw(GameState& GameState) {
                 0.1f,
                 10,
                 WHITE
-            );
-            DrawCylinderEx(
-                vec2to3(points.back(), 0.0),
-                vec2to3(points.back(), 1.0),
-                0.1f,
-                0.1f,
-                8,
-                GRAY
             );
         }
     }
@@ -141,6 +125,24 @@ void Fence::draw(GameState& GameState) {
             10,
             WHITE
         );
+        DrawCylinderEx(
+            vec2to3(points[i], 0.0),
+            vec2to3(points[i], 1.0),
+            0.1f,
+            0.1f,
+            8,
+            GRAY
+        );
+        if (i == points.size() - 2) {
+            DrawCylinderEx(
+                vec2to3(points[i+1], 0.0),
+                vec2to3(points[i+1], 1.0),
+                0.1f,
+                0.1f,
+                8,
+                GRAY
+            );
+        }
     }
     DrawCircle3D(vec2to3(points[0], 1.0), joinDist, (Vector3){1.0, 0.0, 0.0}, 90, WHITE);
 }
