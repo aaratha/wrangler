@@ -104,6 +104,14 @@ void Fence::draw(GameState& GameState) {
                 10,
                 WHITE
             );
+            DrawCylinderEx(
+                vec2to3(points.back(), 0.0),
+                vec2to3(points.back(), 1.0),
+                0.1f,
+                0.1f,
+                8,
+                GRAY
+            );
         } else {
             DrawCylinderEx(
                 vec2to3(points.back(), 1.0),
@@ -112,6 +120,14 @@ void Fence::draw(GameState& GameState) {
                 0.1f,
                 10,
                 WHITE
+            );
+            DrawCylinderEx(
+                vec2to3(points.back(), 0.0),
+                vec2to3(points.back(), 1.0),
+                0.1f,
+                0.1f,
+                8,
+                GRAY
             );
         }
     }
@@ -144,6 +160,16 @@ void Pen::draw() {
                 WHITE
             );
         }
+    }
+    for (const auto& post : fixed_points) {
+        DrawCylinderEx(
+            vec3{post.x, 0.0, post.z},
+            vec3{post.x, 1.0, post.z},
+            0.1,
+            0.1,
+            8,
+            GRAY
+        );
     }
 }
 
