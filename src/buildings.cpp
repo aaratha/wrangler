@@ -159,7 +159,7 @@ void Pen::draw() {
                 thickness,
                 thickness,
                 sides,
-                WHITE
+                BLUE
             );
         }
     }
