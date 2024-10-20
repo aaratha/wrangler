@@ -44,6 +44,7 @@ void GameLoop(vec3 lightDir, RenderTexture2D& shadowMap, rl::Shader& shadowShade
             for (auto& pen : GameState.pens) {
                 pen->update();
             }
+            detect_animals_in_pens(GameState.pens, GameState.animals);
             RenderUtils::update_camera(GameState.camera, GameState.player);
             // Update shaders
             Vector3 cameraPos = GameState.camera.position;
