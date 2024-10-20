@@ -50,7 +50,7 @@ void handle_collisions(
                         vec3 end = pen->rope_points[i][j + 1];
 
                         //if (CheckCollisionPointLine(animal->pos, start, end, ropeSegmentRadius)) {
-                        if (CheckCollisionSpheres(animal->pos, animalRadius, start, 0.2)) {
+                        if (CheckCollisionSpheres(animal->pos, animalRadius, start, 0.1)) {
                             vec3 closestPoint = GetClosestPointOnLineFromPoint(animal->pos, start, end);
                             vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animal->pos, closestPoint));
                             float overlap = ropeSegmentRadius + animalRadius - Vector3Distance(closestPoint, animal->pos);
