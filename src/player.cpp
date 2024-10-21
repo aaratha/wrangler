@@ -29,7 +29,7 @@ void Tether::update(const Camera3D &camera, GameState &GameState,
 
   // Get the intersection point
   vec3 intersection = {ray.position.x + ray.direction.x * t,
-                       1.0f, // We're projecting onto XZ plane, so y = 0
+                       1.0f,  // We're projecting onto XZ plane, so y = 0
                        ray.position.z + ray.direction.z * t};
 
   // Calculate direction from player to intersection
@@ -53,18 +53,20 @@ void Tether::draw() { DrawModel(model, Vector3Zero(), 1.0f, BLUE); }
 
 Rope::Rope(vec3 playerPos, vec3 tetherPos, float thickness, int num_points,
            float constraint)
-    : start(tetherPos), end(playerPos), thickness(thickness),
-      num_points(num_points), constraint(constraint) {
-
-  points = std::vector<vec3>(num_points); // Initialize vector with num_points
+    : start(tetherPos),
+      end(playerPos),
+      thickness(thickness),
+      num_points(num_points),
+      constraint(constraint) {
+  points = std::vector<vec3>(num_points);  // Initialize vector with num_points
   velocities = std::vector<vec3>(num_points);
   init_points();
 }
 
 void Rope::init_points() {
   for (int i = 0; i < num_points; ++i) {
-    float t = static_cast<float>(i) / (num_points - 1); // Normalized factor
-    points[i] = Vector3Lerp(start, end, t); // Calculate the position at t
+    float t = static_cast<float>(i) / (num_points - 1);  // Normalized factor
+    points[i] = Vector3Lerp(start, end, t);  // Calculate the position at t
   }
 }
 
@@ -146,28 +148,32 @@ void Rope::draw() {
 }
 
 Player::Player(vec3 startPos, float speed, Shader shader)
-    : pos(startPos), targ(startPos), movementSpeed(speed), tether(shader),
-      rope(pos, targ, 0.1, 5, 0.05f), com(0.0, 0.0, 5.0), shader(shader) {
-
+    : pos(startPos),
+      targ(startPos),
+      movementSpeed(speed),
+      tether(shader),
+      rope(pos, targ, 0.1, 8, 0.01f),
+      com(0.0, 0.0, 5.0),
+      shader(shader) {
   weight = 0.3f;
   model = LoadModelFromMesh(GenMeshCube(2.0, 2.0, 2.0));
   model.materials[0].shader = shader;
 }
 
 void Player::update() {
-  vec3 direction = vec3(0.0f, 0.0f, 0.0f); // Movement direction
+  vec3 direction = vec3(0.0f, 0.0f, 0.0f);  // Movement direction
 
   if (IsKeyDown(KEY_W)) {
-    direction += vec3(0.0f, 0.0f, -1.0f); // Move forward
+    direction += vec3(0.0f, 0.0f, -1.0f);  // Move forward
   }
   if (IsKeyDown(KEY_S)) {
-    direction += vec3(0.0f, 0.0f, 1.0f); // Move backward
+    direction += vec3(0.0f, 0.0f, 1.0f);  // Move backward
   }
   if (IsKeyDown(KEY_A)) {
-    direction += vec3(-1.0f, 0.0f, 0.0f); // Move left
+    direction += vec3(-1.0f, 0.0f, 0.0f);  // Move left
   }
   if (IsKeyDown(KEY_D)) {
-    direction += vec3(1.0f, 0.0f, 0.0f); // Move right
+    direction += vec3(1.0f, 0.0f, 0.0f);  // Move right
   }
 
   // Normalize direction if it's non-zero to prevent diagonal speed boost

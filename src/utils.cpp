@@ -1,4 +1,5 @@
 #include "utils.hpp"
+
 #include "animal.hpp"
 #include "buildings.hpp"
 #include "player.hpp"
@@ -6,24 +7,33 @@
 #include "terrain.hpp"
 
 GameState::GameState(const rl::Shader &shadowShader)
-    : toggleFence(false), itemActive(0), coins(0),
+    : toggleFence(false),
+      itemActive(0),
+      coins(0),
       camera(RenderUtils::SetupCamera()),
       lightCam(RenderUtils::SetupLightCamera()),
       terrain(std::make_unique<Terrain>(shadowShader)),
       player(std::make_unique<Player>(vec3{0.0, 1.0, 0.0}, 0.2, shadowShader)),
-      animals(CreateAnimals(shadowShader, 10)),
-      fence(std::make_unique<Fence>()), pens() {
+      animals(CreateAnimals(shadowShader, 1)),
+      fence(std::make_unique<Fence>()),
+      pens() {
   // The unique_ptrs will automatically handle memory management
+}
+
+void GameState::addAnimal(const rl::Shader &shadowShader) {
+  animals.push_back(std::make_unique<Animal>(
+      vec3{GetRandomFloat(-25, 25), 1.0f, GetRandomFloat(-25, 25)}, 5.0f,
+      shadowShader));
 }
 
 float lerp_to(float position, float target, float rate) {
   return position +
-         (target - position) * rate; // Lerp between position and target
+         (target - position) * rate;  // Lerp between position and target
 }
 
 vec3 lerp3D(vec3 position, vec3 target, float rate) {
   return position +
-         (target - position) * rate; // Lerp between vec3 position and target
+         (target - position) * rate;  // Lerp between vec3 position and target
 }
 
 float GetRandomFloat(float min, float max) {
@@ -58,10 +68,10 @@ vec2 project_mouse(float y, Camera3D camera) {
   Ray ray = GetMouseRay(mousePos, camera);
 
   // Check if the ray intersects the ground (y = 0 plane)
-  if (ray.direction.y != 0) { // Prevent division by zero
+  if (ray.direction.y != 0) {  // Prevent division by zero
     float t = (1.0f - ray.position.y) /
-              ray.direction.y; // Calculate parameter t for y = 1.0
-    if (t >= 0) { // Ensure the intersection is in front of the camera
+              ray.direction.y;  // Calculate parameter t for y = 1.0
+    if (t >= 0) {  // Ensure the intersection is in front of the camera
       vec2 intersection = {ray.position.x + ray.direction.x * t,
                            ray.position.z + ray.direction.z * t};
       return intersection;
@@ -84,20 +94,16 @@ bool CheckCollisionPolyline(vec3 point, float radius,
 void update_lightDir(vec3 &lightDir, float dt) {
   const float cameraSpeed = 0.05f;
   if (IsKeyDown(KEY_LEFT)) {
-    if (lightDir.x < 0.6f)
-      lightDir.x += cameraSpeed * 60.0f * dt;
+    if (lightDir.x < 0.6f) lightDir.x += cameraSpeed * 60.0f * dt;
   }
   if (IsKeyDown(KEY_RIGHT)) {
-    if (lightDir.x > -0.6f)
-      lightDir.x -= cameraSpeed * 60.0f * dt;
+    if (lightDir.x > -0.6f) lightDir.x -= cameraSpeed * 60.0f * dt;
   }
   if (IsKeyDown(KEY_UP)) {
-    if (lightDir.z < 0.6f)
-      lightDir.z += cameraSpeed * 60.0f * dt;
+    if (lightDir.z < 0.6f) lightDir.z += cameraSpeed * 60.0f * dt;
   }
   if (IsKeyDown(KEY_DOWN)) {
-    if (lightDir.z > -0.6f)
-      lightDir.z -= cameraSpeed * 60.0f * dt;
+    if (lightDir.z > -0.6f) lightDir.z -= cameraSpeed * 60.0f * dt;
   }
 }
 
@@ -114,15 +120,15 @@ void update_itemActive(int &itemActive) {
 }
 
 // Helper function to triangulate the polygon (in the xz plane)
-std::vector<std::array<vec2, 3>>
-triangulatePolygon(const std::vector<vec3> &bounds) {
+std::vector<std::array<vec2, 3>> triangulatePolygon(
+    const std::vector<vec3> &bounds) {
   std::vector<std::array<vec2, 3>> triangles;
   for (size_t i = 1; i < bounds.size() - 1; ++i) {
     // Correctly construct std::array for the triangle
     std::array<vec2, 3> triangle = {
-        vec2{bounds[0].x, bounds[0].z},        // First vertex
-        vec2{bounds[i].x, bounds[i].z},        // Second vertex
-        vec2{bounds[i + 1].x, bounds[i + 1].z} // Third vertex
+        vec2{bounds[0].x, bounds[0].z},         // First vertex
+        vec2{bounds[i].x, bounds[i].z},         // Second vertex
+        vec2{bounds[i + 1].x, bounds[i + 1].z}  // Third vertex
     };
 
     // Push the triangle into the triangles vector
@@ -132,8 +138,8 @@ triangulatePolygon(const std::vector<vec3> &bounds) {
 }
 
 // Helper function to randomly select a triangle, weighted by area
-std::array<vec2, 3>
-selectRandomTriangle(const std::vector<std::array<vec2, 3>> &triangles) {
+std::array<vec2, 3> selectRandomTriangle(
+    const std::vector<std::array<vec2, 3>> &triangles) {
   std::vector<float> areas;
   float totalArea = 0.0f;
 
@@ -187,3 +193,5 @@ vec2 generateRandomPointInTriangle(const std::array<vec2, 3> &tri) {
 
   return vec2{x, y};
 }
+
+void addAnimal(const rl::Shader &shadowShader) {}

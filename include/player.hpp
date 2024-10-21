@@ -28,13 +28,13 @@ class Rope {
   float thickness;
   Color color = GRAY;
   int num_points;
-  int min_points = 5;
+  int min_points = 8;
   int max_points = 15;
   float constraint;
   std::vector<vec3> points;
   std::vector<vec3> velocities;
-  float friction = 0.98f;  // Friction factor (close to 1.0 means low friction,
-                           // close to 0 means high friction)
+  float friction = 0.999f;  // Friction factor (close to 1.0 means low friction,
+                            // close to 0 means high friction)
 
   int sides = 10;
 

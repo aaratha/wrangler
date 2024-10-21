@@ -1,12 +1,13 @@
 #pragma once
 
-#include "raylib-cpp.hpp"
 #include <array>
 #include <memory>
 #include <vector>
 
-namespace rl = raylib;    // Create an alias for the raylib namespace
-using vec3 = rl::Vector3; // Define vec3 as an alias for raylib's Vector3
+#include "raylib-cpp.hpp"
+
+namespace rl = raylib;     // Create an alias for the raylib namespace
+using vec3 = rl::Vector3;  // Define vec3 as an alias for raylib's Vector3
 using vec2 = rl::Vector2;
 
 const float speed = 0.2;
@@ -19,9 +20,11 @@ class Player;
 class Terrain;
 
 class GameState {
-public:
+ public:
   bool toggleFence;
   int itemActive;
+  float addAnimalInterval = 2.0;
+  float addAnimalTimer = 0.0;
   int coins;
   Camera3D camera;
   Camera3D lightCam;
@@ -29,11 +32,12 @@ public:
   std::unique_ptr<Player> player;
   std::vector<std::unique_ptr<Animal>> animals;
   std::unique_ptr<Fence>
-      fence; // Use unique_ptr for automatic memory management
-  std::vector<std::unique_ptr<Pen>> pens; // Use unique_ptr here as well
+      fence;  // Use unique_ptr for automatic memory management
+  std::vector<std::unique_ptr<Pen>> pens;  // Use unique_ptr here as well
   vec2 mouse_proj;
 
   GameState(const rl::Shader &shadowShader);
+  void addAnimal(const rl::Shader &shadowShader);
 };
 
 // Function declarations
@@ -58,11 +62,11 @@ void update_lightDir(vec3 &lightDir, float dt);
 
 void update_itemActive(int &itemActive);
 
-std::vector<std::array<vec2, 3>>
-triangulatePolygon(const std::vector<vec3> &bounds);
+std::vector<std::array<vec2, 3>> triangulatePolygon(
+    const std::vector<vec3> &bounds);
 
-std::array<vec2, 3>
-selectRandomTriangle(const std::vector<std::array<vec2, 3>> &triangles);
+std::array<vec2, 3> selectRandomTriangle(
+    const std::vector<std::array<vec2, 3>> &triangles);
 
 float calculateTriangleArea(const vec2 &p1, const vec2 &p2, const vec2 &p3);
 

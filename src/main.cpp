@@ -39,6 +39,11 @@ void GameLoop(vec3 lightDir, RenderTexture2D &shadowMap,
       GameState.player->update();
       GameState.player->rope.update(GameState.player->pos,
                                     GameState.player->tether.pos, dt);
+      GameState.addAnimalTimer += dt;
+      if (GameState.addAnimalTimer > GameState.addAnimalInterval) {
+        GameState.addAnimalTimer = 0.0;
+        GameState.addAnimal(shadowShader);
+      }
       for (auto &animal : GameState.animals) {
         animal->update();
       }
