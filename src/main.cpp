@@ -2,6 +2,12 @@
 #include "raymath.h"
 #include "rlgl.h"
 #define RAYGUI_IMPLEMENTATION
+#include <array>
+#include <iostream>
+#include <limits>
+#include <random>
+#include <vector>
+
 #include "animal.hpp"
 #include "buildings.hpp"
 #include "physics.hpp"
@@ -10,12 +16,6 @@
 #include "render_utils.hpp"
 #include "terrain.hpp"
 #include "utils.hpp"
-
-#include <array>
-#include <iostream>
-#include <limits>
-#include <random>
-#include <vector>
 
 const float PHYSICS_TIME = 1.0 / 60.0;
 
@@ -89,13 +89,12 @@ int main(void) {
   int screenHeight = 720;
 
   try {
-
     RenderUtils::InitializeWindow(screenWidth, screenHeight);
 
-    Font customFont = LoadFont("resources/fonts/Roboto-Regular.ttf"); // Load
-    GuiSetFont(customFont); // Set the custom font
+    Font customFont = LoadFont("resources/fonts/Roboto-Regular.ttf");  // Load
+    GuiSetFont(customFont);  // Set the custom font
 
-    GuiSetStyle(DEFAULT, TEXT_SIZE, 26); // Adjust size as needed
+    GuiSetStyle(DEFAULT, TEXT_SIZE, 26);  // Adjust size as needed
 
     vec3 lightDir = Vector3Normalize((Vector3){0.35f, -1.0f, -0.35f});
     RenderTexture2D dofTexture =

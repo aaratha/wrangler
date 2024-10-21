@@ -11,11 +11,13 @@ Tether::Tether(Shader shader) : shader(shader) {
 void Tether::update(const Camera3D &camera, GameState &GameState,
                     vec3 playerPos) {
   // Get mouse position
-  float maxDistance = 4.0;
   if (GameState.itemActive == 0) {
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-      maxDistance = 15.0;
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && maxDistance < 15.0)
+      maxDistance += 0.5;
+    if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT) && maxDistance > 4.0)
+      maxDistance -= 0.5;
   }
+
   Vector2 mousePos = GetMousePosition();
 
   // Get the ray from the mouse position

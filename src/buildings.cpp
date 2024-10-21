@@ -30,9 +30,10 @@ bool is_point_in_polygon(const vec3 &point, const Pen &pen) {
   int intersections = 0;
   for (size_t i = 0; i < pen.fixed_points.size(); i++) {
     vec3 start = pen.fixed_points[i];
-    vec3 end = pen.fixed_points[(i + 1) %
-                                pen.fixed_points.size()]; // Wrap around to form
-                                                          // closed polygon
+    vec3 end =
+        pen.fixed_points[(i + 1) %
+                         pen.fixed_points.size()];  // Wrap around to form
+                                                    // closed polygon
 
     // Check if the ray from 'point' intersects with the edge from start to end
     if ((point.z > start.z) != (point.z > end.z)) {
@@ -43,7 +44,8 @@ bool is_point_in_polygon(const vec3 &point, const Pen &pen) {
       }
     }
   }
-  return (intersections % 2 == 1); // Odd intersections mean the point is inside
+  return (intersections % 2 ==
+          1);  // Odd intersections mean the point is inside
 }
 
 void detect_animals_in_pens(
@@ -51,7 +53,7 @@ void detect_animals_in_pens(
     const std::vector<std::unique_ptr<Animal>> &animals) {
   // Step 1: Assign each animal to the relevant pen
   for (auto &pen : pens) {
-    pen->contained_animals.clear(); // Reset contained animals
+    pen->contained_animals.clear();  // Reset contained animals
     // Compute the AABB for quick rejection
     AABB pen_aabb = compute_aabb(*pen);
     // Step 2: For each animal, check if it's inside the pen
@@ -60,11 +62,11 @@ void detect_animals_in_pens(
       // Quick rejection via AABB test
       if (animal_pos.x < pen_aabb.min.x || animal_pos.x > pen_aabb.max.x ||
           animal_pos.z < pen_aabb.min.z || animal_pos.z > pen_aabb.max.z) {
-        continue; // Animal is outside the pen's AABB
+        continue;  // Animal is outside the pen's AABB
       }
       if (is_point_in_polygon(animal_pos, *pen)) {
         pen->contained_animals.push_back(
-            animal.get()); // Add to pen's contained animals
+            animal.get());  // Add to pen's contained animals
       }
     }
 
@@ -126,7 +128,7 @@ void Pen::spawnCoin() {
   // Number of coins to spawn based on number of animals in the pen
   // Generate a random coin position within the pen's bounds (xz plane)
   Coin new_coin = Coin(fixed_points);  // Use fixed_points as the polygon bounds
-  contained_coins.push_back(new_coin); // Add the new coin to the vector
+  contained_coins.push_back(new_coin);  // Add the new coin to the vector
 }
 
 void Pen::update(GameState &GameState, float dt) {
@@ -169,7 +171,7 @@ void Pen::update(GameState &GameState, float dt) {
     if (coinTimer >= coinInterval / contained_animals.size() &&
         species.type != SpeciesType::NULL_SPECIES) {
       spawnCoin();
-      coinTimer = 0.0f; // Reset the timer
+      coinTimer = 0.0f;  // Reset the timer
     }
 
     // Check for collisions between player and coins
@@ -216,7 +218,7 @@ bool Pen::checkCoinCollisions(GameState &GameState, Coin &coin) {
 }
 
 Fence::Fence() {
-  points.clear(); // Initialize points vector
+  points.clear();  // Initialize points vector
   joinDist = 1.0;
 }
 
@@ -251,7 +253,7 @@ void Fence::draw(GameState &GameState) {
     }
   }
   if (points.size() < 2)
-    return; // Avoid drawing if there are not enough points
+    return;  // Avoid drawing if there are not enough points
   for (size_t i = 0; i < points.size() - 1; ++i) {
     DrawCylinderEx(vec2to3(points[i], 1.0), vec2to3(points[i + 1], 1.0), 0.1f,
                    0.1f, 10, WHITE);
@@ -288,10 +290,10 @@ void handle_building(GameState &gameState, Camera3D camera) {
   Ray ray = GetMouseRay(mousePos, camera);
 
   // Check if the ray intersects the ground (y = 0 plane)
-  if (ray.direction.y != 0) { // Prevent division by zero
+  if (ray.direction.y != 0) {  // Prevent division by zero
     float t = (1.0f - ray.position.y) /
-              ray.direction.y; // Calculate parameter t for y = 1.0
-    if (t >= 0) { // Ensure the intersection is in front of the camera
+              ray.direction.y;  // Calculate parameter t for y = 1.0
+    if (t >= 0) {  // Ensure the intersection is in front of the camera
       vec2 intersection = {ray.position.x + ray.direction.x * t,
                            ray.position.z + ray.direction.z * t};
 
