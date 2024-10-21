@@ -2,6 +2,8 @@
 
 #include "raylib-cpp.hpp"
 #include <memory>
+#include <vector>
+#include <array>
 
 namespace rl = raylib;    // Create an alias for the raylib namespace
 using vec3 = rl::Vector3; // Define vec3 as an alias for raylib's Vector3
@@ -52,3 +54,13 @@ vec2 project_mouse(float y, Camera3D camera);
 void update_lightDir(vec3 &lightDir, float dt);
 
 void update_itemActive(int &itemActive);
+
+std::vector<std::array<vec2, 3>>
+triangulatePolygon(const std::vector<vec3> &bounds);
+
+std::array<vec2, 3>
+selectRandomTriangle(const std::vector<std::array<vec2, 3>> &triangles);
+
+float calculateTriangleArea(const vec2 &p1, const vec2 &p2, const vec2 &p3);
+
+vec2 generateRandomPointInTriangle(const std::array<vec2, 3> &tri);

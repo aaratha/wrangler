@@ -66,6 +66,7 @@ set(SOURCES
     src/render_utils.cpp
     src/buildings.cpp
     src/terrain.cpp
+    src/collectables.cpp
 )
 
 # Main executable target

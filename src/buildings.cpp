@@ -122,7 +122,18 @@ Pen::Pen(std::vector<vec3> points) : fixed_points(points) {
   initializeRopePoints();
 }
 
-void Pen::update() {
+void Pen::spawnCoins() {
+    // Number of coins to spawn based on number of animals in the pen
+    int num_coins_to_spawn = contained_animals.size();
+
+    for (int i = 0; i < num_coins_to_spawn; ++i) {
+        // Generate a random coin position within the pen's bounds (xz plane)
+        Coin new_coin = Coin(fixed_points);  // Use fixed_points as the polygon bounds
+        contained_coins.push_back(new_coin);    // Add the new coin to the vector
+    }
+}
+
+void Pen::update(float dt) {
   for (size_t i = 0; i < fixed_points.size(); ++i) {
     size_t next_i = (i + 1) % fixed_points.size();
     vec3 start = fixed_points[i];
@@ -156,6 +167,12 @@ void Pen::update() {
 
       segment_points[j] = Vector3Add(segment_points[j], velocity);
       segment_velocities[j] = velocity;
+    }
+    // Coin collection logic
+     coinTimer += dt;
+    if (coinTimer >= coinInterval) {
+        spawnCoins();
+        coinTimer = 0.0f;  // Reset the timer
     }
   }
 }
@@ -222,6 +239,9 @@ void Pen::draw() {
   for (const auto &post : fixed_points) {
     DrawCylinderEx(vec3{post.x, 0.0, post.z}, vec3{post.x, 1.0, post.z}, 0.1,
                    0.1, 8, GRAY);
+  }
+  for (auto& coin : contained_coins) {
+    coin.draw();
   }
 }
 
