@@ -171,7 +171,7 @@ void Pen::update(GameState &GameState, float dt) {
     }
     // Coin collection logic
     coinTimer += dt;
-    if (coinTimer >= coinInterval) {
+    if (coinTimer >= coinInterval && species.type != SpeciesType::NULL_SPECIES) {
       spawnCoins();
       coinTimer = 0.0f; // Reset the timer
     }
@@ -195,28 +195,23 @@ bool Pen::checkCoinCollisions(GameState& GameState, Coin& coin) {
     const float playerRadius = 1.5f;
     const float tetherRadius = 0.5f;
 
-    // Debug: Print the player's position, tether position, and coin position
-    std::cout << "Player position: " << GameState.player->pos.x << ", " << GameState.player->pos.y << ", " << GameState.player->pos.z << std::endl;
-    std::cout << "Tether position: " << GameState.player->tether.pos.x << ", " << GameState.player->tether.pos.y << ", " << GameState.player->tether.pos.z << std::endl;
-    std::cout << "Coin position: " << coin.pos.x << ", " << coin.pos.y << ", " << coin.pos.z << std::endl;
-
     // Check for collisions
     if (CheckCollisionSpheres(GameState.player->pos, playerRadius, coin.pos, coin.radius)) {
-        std::cout << "Collision detected: Player and Coin" << std::endl;
+        // std::cout << "Collision detected: Player and Coin" << std::endl;
         return true;
     }
 
     if (CheckCollisionSpheres(GameState.player->tether.pos, tetherRadius, coin.pos, coin.radius)) {
-        std::cout << "Collision detected: Tether and Coin" << std::endl;
+        // std::cout << "Collision detected: Tether and Coin" << std::endl;
         return true;
     }
 
     if (CheckCollisionPolyline(coin.pos, coin.radius, GameState.player->rope.points, GameState.player->rope.thickness)) {
-        std::cout << "Collision detected: Rope and Coin" << std::endl;
+        // std::cout << "Collision detected: Rope and Coin" << std::endl;
         return true;
     }
 
-    std::cout << "No collision detected" << std::endl;
+    // std::cout << "No collision detected" << std::endl;
     return false;
 }
 
