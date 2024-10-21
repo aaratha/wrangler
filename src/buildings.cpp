@@ -123,17 +123,18 @@ Pen::Pen(std::vector<vec3> points) : fixed_points(points) {
 }
 
 void Pen::spawnCoins() {
-    // Number of coins to spawn based on number of animals in the pen
-    int num_coins_to_spawn = contained_animals.size();
+  // Number of coins to spawn based on number of animals in the pen
+  int num_coins_to_spawn = contained_animals.size();
 
-    for (int i = 0; i < num_coins_to_spawn; ++i) {
-        // Generate a random coin position within the pen's bounds (xz plane)
-        Coin new_coin = Coin(fixed_points);  // Use fixed_points as the polygon bounds
-        contained_coins.push_back(new_coin);    // Add the new coin to the vector
-    }
+  for (int i = 0; i < num_coins_to_spawn; ++i) {
+    // Generate a random coin position within the pen's bounds (xz plane)
+    Coin new_coin =
+        Coin(fixed_points); // Use fixed_points as the polygon bounds
+    contained_coins.push_back(new_coin); // Add the new coin to the vector
+  }
 }
 
-void Pen::update(float dt) {
+void Pen::update(GameState &GameState, float dt) {
   for (size_t i = 0; i < fixed_points.size(); ++i) {
     size_t next_i = (i + 1) % fixed_points.size();
     vec3 start = fixed_points[i];
@@ -169,12 +170,54 @@ void Pen::update(float dt) {
       segment_velocities[j] = velocity;
     }
     // Coin collection logic
-     coinTimer += dt;
+    coinTimer += dt;
     if (coinTimer >= coinInterval) {
-        spawnCoins();
-        coinTimer = 0.0f;  // Reset the timer
+      spawnCoins();
+      coinTimer = 0.0f; // Reset the timer
+    }
+
+    // Check for collisions between player and coins
+    for (auto it = contained_coins.begin(); it != contained_coins.end();) {
+      Coin &coin = *it;
+      if (checkCoinCollisions(GameState, coin)) {
+        // Remove the coin from the contained_coins vector and increment the
+        // GameState.coins count
+        it = contained_coins.erase(it);
+        GameState.coins++;
+      } else {
+        ++it;
+      }
     }
   }
+}
+
+bool Pen::checkCoinCollisions(GameState& GameState, Coin& coin) {
+    const float playerRadius = 1.5f;
+    const float tetherRadius = 0.5f;
+
+    // Debug: Print the player's position, tether position, and coin position
+    std::cout << "Player position: " << GameState.player->pos.x << ", " << GameState.player->pos.y << ", " << GameState.player->pos.z << std::endl;
+    std::cout << "Tether position: " << GameState.player->tether.pos.x << ", " << GameState.player->tether.pos.y << ", " << GameState.player->tether.pos.z << std::endl;
+    std::cout << "Coin position: " << coin.pos.x << ", " << coin.pos.y << ", " << coin.pos.z << std::endl;
+
+    // Check for collisions
+    if (CheckCollisionSpheres(GameState.player->pos, playerRadius, coin.pos, coin.radius)) {
+        std::cout << "Collision detected: Player and Coin" << std::endl;
+        return true;
+    }
+
+    if (CheckCollisionSpheres(GameState.player->tether.pos, tetherRadius, coin.pos, coin.radius)) {
+        std::cout << "Collision detected: Tether and Coin" << std::endl;
+        return true;
+    }
+
+    if (CheckCollisionPolyline(coin.pos, coin.radius, GameState.player->rope.points, GameState.player->rope.thickness)) {
+        std::cout << "Collision detected: Rope and Coin" << std::endl;
+        return true;
+    }
+
+    std::cout << "No collision detected" << std::endl;
+    return false;
 }
 
 Fence::Fence() {
@@ -240,7 +283,7 @@ void Pen::draw() {
     DrawCylinderEx(vec3{post.x, 0.0, post.z}, vec3{post.x, 1.0, post.z}, 0.1,
                    0.1, 8, GRAY);
   }
-  for (auto& coin : contained_coins) {
+  for (auto &coin : contained_coins) {
     coin.draw();
   }
 }

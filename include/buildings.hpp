@@ -1,9 +1,10 @@
 #pragma once
 
 #include "animal.hpp"
+#include "player.hpp"
+#include "collectables.hpp"
 #include "raylib-cpp.hpp"
 #include "utils.hpp"
-#include "collectables.hpp"
 #include <iostream> // For printing
 #include <vector>
 
@@ -15,7 +16,7 @@ struct AABB {
 
 class Pen {
 private:
-  float coinTimer = 0.0f; // Timer to accumulate time for coin addition
+  float coinTimer = 0.0f;          // Timer to accumulate time for coin addition
   const float coinInterval = 5.0f; // 1 second interval for adding coins
 public:
   std::vector<vec3> fixed_points;
@@ -31,8 +32,9 @@ public:
   std::vector<std::vector<vec3>> rope_velocities;
   void initializeRopePoints();
   Pen(std::vector<vec3> points);
+  bool checkCoinCollisions(GameState &GameState, Coin& coin);
   void spawnCoins();
-  void update(float dt);
+  void update(GameState &GameState, float dt);
   void draw();
 };
 

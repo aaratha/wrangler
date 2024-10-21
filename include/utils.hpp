@@ -1,9 +1,9 @@
 #pragma once
 
 #include "raylib-cpp.hpp"
+#include <array>
 #include <memory>
 #include <vector>
-#include <array>
 
 namespace rl = raylib;    // Create an alias for the raylib namespace
 using vec3 = rl::Vector3; // Define vec3 as an alias for raylib's Vector3
@@ -46,6 +46,9 @@ vec3 GetClosestPointOnLineFromPoint(vec3 point, vec3 lineStart, vec3 lineEnd);
 // Helper function to check collision between a point and a line segment
 bool CheckCollisionPointLine(vec3 point, vec3 lineStart, vec3 lineEnd,
                              float threshold);
+
+bool CheckCollisionPolyline(vec3 point, float radius,
+                            const std::vector<vec3> &polyline, float thickness);
 
 vec3 vec2to3(vec2 vec2, float y);
 

@@ -43,7 +43,7 @@ void GameLoop(vec3 lightDir, RenderTexture2D &shadowMap,
         animal->update();
       }
       for (auto &pen : GameState.pens) {
-        pen->update(dt);
+        pen->update(GameState, dt);
       }
       detect_animals_in_pens(GameState.pens, GameState.animals);
       RenderUtils::update_camera(GameState.camera, GameState.player);
@@ -92,6 +92,11 @@ int main(void) {
 
     RenderUtils::InitializeWindow(screenWidth, screenHeight);
 
+    Font customFont = LoadFont("resources/fonts/Roboto-Regular.ttf"); // Load
+    GuiSetFont(customFont); // Set the custom font
+
+    GuiSetStyle(DEFAULT, TEXT_SIZE, 26); // Adjust size as needed
+
     vec3 lightDir = Vector3Normalize((Vector3){0.35f, -1.0f, -0.35f});
     RenderTexture2D dofTexture =
         RenderUtils::SetupDofTexture(screenWidth, screenHeight);
@@ -114,6 +119,7 @@ int main(void) {
 
     RenderUtils::UnloadResources(shadowShader, shadowMap, GameState, dofShader,
                                  dofTexture);
+    UnloadFont(customFont);
   } catch (const std::exception &e) {
     TraceLog(LOG_ERROR, "An error occurred: %s", e.what());
   }

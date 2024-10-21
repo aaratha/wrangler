@@ -14,4 +14,4 @@ Coin::Coin(std::vector<vec3> bounds) {
   pos = vec3{randomPoint2D.x, 1.0f, randomPoint2D.y};
 }
 
-void Coin::draw() { DrawSphere(pos, 0.2f, YELLOW); }
+void Coin::draw() { DrawSphere(pos, radius, YELLOW); }

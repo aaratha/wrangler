@@ -69,6 +69,18 @@ vec2 project_mouse(float y, Camera3D camera) {
   }
 }
 
+bool CheckCollisionPolyline(vec3 point, float radius,
+                            const std::vector<vec3> &polyline,
+                            float thickness) {
+  for (size_t i = 0; i < polyline.size() - 1; ++i) {
+    if (CheckCollisionPointLine(point, polyline[i], polyline[i + 1],
+                                radius + thickness)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void update_lightDir(vec3 &lightDir, float dt) {
   const float cameraSpeed = 0.05f;
   if (IsKeyDown(KEY_LEFT)) {
