@@ -18,10 +18,14 @@ public:
 };
 
 class Rope {
+private:
+  float deltaTimer = 0.0f;          // Timer to accumulate time for coin addition
+  const float deltaInterval = 0.02f; //
 public:
   vec3 start;
   vec3 end;
   float thickness;
+  Color color = GRAY;
   int num_points;
   int min_points = 5;
   int max_points = 15;
@@ -44,7 +48,7 @@ public:
     void init_points();
     void add_point(vec3 playerPos);
     void remove_point();
-    void update(vec3 playerPos, vec3 tetherPos);
+    void update(vec3 playerPos, vec3 tetherPos, float dt);
 
   void draw();
 

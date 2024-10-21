@@ -82,16 +82,27 @@ void Rope::remove_point() {
   }
 }
 
-void Rope::update(vec3 playerPos, vec3 tetherPos) {
+void Rope::update(vec3 playerPos, vec3 tetherPos, float dt) {
   start = tetherPos;
   end = playerPos;
   points[0] = start;
   points[num_points - 1] = end;
 
-  if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && num_points < max_points) {
+  deltaTimer += dt;
+  if (IsKeyDown(KEY_LEFT_SHIFT)) {
+    color = RED;
+
+  } else {
+    color = GRAY;
+  }
+  if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && num_points < max_points &&
+      deltaTimer >= deltaInterval) {
     add_point(playerPos);
-  } else if (num_points > min_points) {
+    deltaTimer = 0.0;
+  } else if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT) && num_points > min_points &&
+             deltaTimer >= deltaInterval) {
     remove_point();
+    deltaTimer = 0.0;
   }
 
   for (int i = 1; i < num_points - 1; ++i) {
@@ -126,9 +137,9 @@ void Rope::update(vec3 playerPos, vec3 tetherPos) {
 
 void Rope::draw() {
   for (int i = 0; i < num_points - 1; i++) {
-    DrawCylinderEx(
-        points[i], points[i + 1], thickness, thickness, sides,
-        WHITE); // Draw a cylinder with base at startPos and top at endPos
+    vec3 segment_dir = points[i + 1] - points[i];
+    vec3 midpoint = points[i] + segment_dir * 0.5f;
+    DrawCylinderEx(points[i], midpoint, thickness, thickness, sides, color);
   }
 }
 

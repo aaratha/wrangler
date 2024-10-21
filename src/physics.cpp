@@ -94,29 +94,31 @@ void handle_collisions(GameState &GameState, int &substeps,
     }
 
     // rope and animals
-    for (auto &animal : GameState.animals) {
-      for (int i = 0; i < GameState.player->rope.num_points - 1; i++) {
-        if (CheckCollisionPointLine(
+    if (!IsKeyDown(KEY_LEFT_SHIFT)) {
+      for (auto &animal : GameState.animals) {
+        for (int i = 0; i < GameState.player->rope.num_points - 1; i++) {
+          if (CheckCollisionPointLine(
+                  animal->pos, GameState.player->rope.points[i],
+                  GameState.player->rope.points[i + 1], ropeSegmentRadius)) {
+            // Handle rope-animal collision
+            vec3 closestPoint = GetClosestPointOnLineFromPoint(
                 animal->pos, GameState.player->rope.points[i],
-                GameState.player->rope.points[i + 1], ropeSegmentRadius)) {
-          // Handle rope-animal collision
-          vec3 closestPoint = GetClosestPointOnLineFromPoint(
-              animal->pos, GameState.player->rope.points[i],
-              GameState.player->rope.points[i + 1]);
-          vec3 collisionNormal =
-              Vector3Normalize(Vector3Subtract(animal->pos, closestPoint));
-          float overlap = ropeSegmentRadius + animalRadius -
-                          Vector3Distance(closestPoint, animal->pos);
-          animal->targ = Vector3Add(
-              animal->targ, Vector3Scale(collisionNormal, overlap * 0.8));
+                GameState.player->rope.points[i + 1]);
+            vec3 collisionNormal =
+                Vector3Normalize(Vector3Subtract(animal->pos, closestPoint));
+            float overlap = ropeSegmentRadius + animalRadius -
+                            Vector3Distance(closestPoint, animal->pos);
+            animal->targ = Vector3Add(
+                animal->targ, Vector3Scale(collisionNormal, overlap * 0.8));
 
-          // Displace rope points
-          vec3 displacementVector =
-              Vector3Scale(collisionNormal, overlap * 0.2f);
-          GameState.player->rope.points[i] = Vector3Subtract(
-              GameState.player->rope.points[i], displacementVector);
-          GameState.player->rope.points[i + 1] = Vector3Subtract(
-              GameState.player->rope.points[i + 1], displacementVector);
+            // Displace rope points
+            vec3 displacementVector =
+                Vector3Scale(collisionNormal, overlap * 0.2f);
+            GameState.player->rope.points[i] = Vector3Subtract(
+                GameState.player->rope.points[i], displacementVector);
+            GameState.player->rope.points[i + 1] = Vector3Subtract(
+                GameState.player->rope.points[i + 1], displacementVector);
+          }
         }
       }
     }

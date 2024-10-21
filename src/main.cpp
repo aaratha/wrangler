@@ -38,7 +38,7 @@ void GameLoop(vec3 lightDir, RenderTexture2D &shadowMap,
                                       GameState.player->pos);
       GameState.player->update();
       GameState.player->rope.update(GameState.player->pos,
-                                    GameState.player->tether.pos);
+                                    GameState.player->tether.pos, dt);
       for (auto &animal : GameState.animals) {
         animal->update();
       }
