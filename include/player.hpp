@@ -23,6 +23,8 @@ public:
   vec3 end;
   float thickness;
   int num_points;
+  int min_points = 5;
+  int max_points = 15;
   float constraint;
   std::vector<vec3> points;
   std::vector<vec3> velocities;  // MAX_POINTS should be the number of points in the rope
@@ -40,7 +42,8 @@ public:
     );
 
     void init_points();
-
+    void add_point(vec3 playerPos);
+    void remove_point();
     void update(vec3 playerPos, vec3 tetherPos);
 
   void draw();
