@@ -17,7 +17,7 @@ struct AABB {
 class Pen {
 private:
   float coinTimer = 0.0f;          // Timer to accumulate time for coin addition
-  const float coinInterval = 5.0f; // 1 second interval for adding coins
+  const float coinInterval = 8.0f; // 1 second interval for adding coins
 public:
   std::vector<vec3> fixed_points;
   std::vector<Animal *> contained_animals;
@@ -33,7 +33,7 @@ public:
   void initializeRopePoints();
   Pen(std::vector<vec3> points);
   bool checkCoinCollisions(GameState &GameState, Coin& coin);
-  void spawnCoins();
+  void spawnCoin();
   void update(GameState &GameState, float dt);
   void draw();
 };

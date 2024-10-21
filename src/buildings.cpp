@@ -122,16 +122,11 @@ Pen::Pen(std::vector<vec3> points) : fixed_points(points) {
   initializeRopePoints();
 }
 
-void Pen::spawnCoins() {
+void Pen::spawnCoin() {
   // Number of coins to spawn based on number of animals in the pen
-  int num_coins_to_spawn = contained_animals.size();
-
-  for (int i = 0; i < num_coins_to_spawn; ++i) {
-    // Generate a random coin position within the pen's bounds (xz plane)
-    Coin new_coin =
-        Coin(fixed_points); // Use fixed_points as the polygon bounds
-    contained_coins.push_back(new_coin); // Add the new coin to the vector
-  }
+  // Generate a random coin position within the pen's bounds (xz plane)
+  Coin new_coin = Coin(fixed_points);  // Use fixed_points as the polygon bounds
+  contained_coins.push_back(new_coin); // Add the new coin to the vector
 }
 
 void Pen::update(GameState &GameState, float dt) {
@@ -171,8 +166,9 @@ void Pen::update(GameState &GameState, float dt) {
     }
     // Coin collection logic
     coinTimer += dt;
-    if (coinTimer >= coinInterval && species.type != SpeciesType::NULL_SPECIES) {
-      spawnCoins();
+    if (coinTimer >= coinInterval / contained_animals.size() &&
+        species.type != SpeciesType::NULL_SPECIES) {
+      spawnCoin();
       coinTimer = 0.0f; // Reset the timer
     }
 
@@ -191,28 +187,32 @@ void Pen::update(GameState &GameState, float dt) {
   }
 }
 
-bool Pen::checkCoinCollisions(GameState& GameState, Coin& coin) {
-    const float playerRadius = 1.5f;
-    const float tetherRadius = 0.5f;
+bool Pen::checkCoinCollisions(GameState &GameState, Coin &coin) {
+  const float playerRadius = 1.5f;
+  const float tetherRadius = 0.5f;
 
-    // Check for collisions
-    if (CheckCollisionSpheres(GameState.player->pos, playerRadius, coin.pos, coin.radius)) {
-        // std::cout << "Collision detected: Player and Coin" << std::endl;
-        return true;
-    }
+  // Check for collisions
+  if (CheckCollisionSpheres(GameState.player->pos, playerRadius, coin.pos,
+                            coin.radius)) {
+    // std::cout << "Collision detected: Player and Coin" << std::endl;
+    return true;
+  }
 
-    if (CheckCollisionSpheres(GameState.player->tether.pos, tetherRadius, coin.pos, coin.radius)) {
-        // std::cout << "Collision detected: Tether and Coin" << std::endl;
-        return true;
-    }
+  if (CheckCollisionSpheres(GameState.player->tether.pos, tetherRadius,
+                            coin.pos, coin.radius)) {
+    // std::cout << "Collision detected: Tether and Coin" << std::endl;
+    return true;
+  }
 
-    if (CheckCollisionPolyline(coin.pos, coin.radius, GameState.player->rope.points, GameState.player->rope.thickness)) {
-        // std::cout << "Collision detected: Rope and Coin" << std::endl;
-        return true;
-    }
+  if (CheckCollisionPolyline(coin.pos, coin.radius,
+                             GameState.player->rope.points,
+                             GameState.player->rope.thickness)) {
+    // std::cout << "Collision detected: Rope and Coin" << std::endl;
+    return true;
+  }
 
-    // std::cout << "No collision detected" << std::endl;
-    return false;
+  // std::cout << "No collision detected" << std::endl;
+  return false;
 }
 
 Fence::Fence() {
