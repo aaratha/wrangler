@@ -159,6 +159,13 @@ void handle_collisions(GameState &GameState, int &substeps,
             }
           }
         }
+        for (size_t i = 0; i < pen->fixed_points.size(); ++i) {
+            if (CheckCollisionSpheres(animal->pos, animalRadius, pen->fixed_points[i], 1.0)) {
+              vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animal->pos, pen->fixed_points[i]));
+              float overlap = animalRadius + 1.0 - Vector3Distance(animal->pos, pen->fixed_points[i]);
+              animal->pos = Vector3Add(animal->pos, Vector3Scale(collisionNormal, overlap));
+            }
+        }
       }
     }
 
