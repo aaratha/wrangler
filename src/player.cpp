@@ -156,7 +156,7 @@ Player::Player(vec3 startPos, float speed, Shader shader)
       com(0.0, 0.0, 5.0),
       shader(shader) {
   weight = 0.3f;
-  model = LoadModelFromMesh(GenMeshCube(2.0, 2.0, 2.0));
+  model = LoadModel("resources/models/character.glb");
   model.materials[0].shader = shader;
 }
 
@@ -197,5 +197,5 @@ void Player::update() {
 
 void Player::draw() {
   // Draw the cube with WHITE as base color (shader will modify it)
-  DrawModel(model, Vector3Zero(), 1.0f, RED);
+  DrawModel(model, Vector3Zero(), 1.0f, GRAY);
 }
