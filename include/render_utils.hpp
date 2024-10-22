@@ -31,9 +31,12 @@ Camera3D SetupLightCamera();
 RenderTexture2D LoadShadowmapRenderTexture(int width, int height);
 void UnloadShadowmapRenderTexture(RenderTexture2D target);
 
-void draw_scene(GameState& GameState);
-
 void update_camera(GameState& GameState);
+
+bool is_in_camera_view(const Vector3& position, float radius,
+                       const Camera& camera, int screenWidth, int screenHeight);
+
+void draw_scene(GameState& GameState);
 
 void UnloadResources(Shader shadowShader, RenderTexture2D shadowMap,
                      GameState& GameState, Shader dofShader,
@@ -52,8 +55,9 @@ void RenderSceneToTexture(RenderTexture2D& dofTexture, Camera3D& camera,
                           rl::Shader& shadowShader, RenderTexture2D& shadowMap,
                           GameState& GameState);
 
-void HandleWindowResize(int& screenWidth, int& screenHeight,
-                        RenderTexture2D& dofTexture, Shader& dofShader);
+void HandleWindowResize(GameState& GameState, int& screenWidth,
+                        int& screenHeight, RenderTexture2D& dofTexture,
+                        Shader& dofShader);
 
 void DrawGUI(GameState& GameState, int& screenWidth, int& screenHeight);
 }  // namespace RenderUtils

@@ -76,24 +76,6 @@ void UnloadShadowmapRenderTexture(RenderTexture2D target) {
   }
 }
 
-void draw_scene(GameState &GameState) {
-  GameState.terrain->draw();
-  GameState.player->draw();
-  GameState.player->tether.draw();
-  GameState.player->rope.draw();
-
-  for (auto &animal : GameState.animals) {
-    animal->draw();
-  }
-  GameState.fence->draw(GameState);
-  for (const auto &pen : GameState.pens) {
-    if (pen) {      // Check if the unique_ptr is not null
-      pen->draw();  // Call the draw method of Pen
-    }
-  }
-  // GameState.pens.draw();
-}
-
 void update_camera(GameState &GameState) {
   float fov_ext = 70.0;
   float fov_rest = 60.0;
@@ -123,6 +105,41 @@ void update_camera(GameState &GameState) {
 #endif
   GameState.camera.fovy = Clamp(GameState.camera.fovy, 20.0f, 100.0f);
   GameState.camera.fovy = Clamp(GameState.camera.fovy, 20.0f, 100.0f);
+}
+
+bool is_in_camera_view(const Vector3 &position, float radius,
+                       const Camera &camera, int screenWidth,
+                       int screenHeight) {
+  // Convert world position to screen space
+  Vector2 screenPos = GetWorldToScreen(position, camera);
+
+  // Check if the screen position is within the screen bounds, accounting for
+  // the object's radius
+  bool is_visible =
+      (screenPos.x + radius > 0) && (screenPos.x - radius < screenWidth) &&
+      (screenPos.y + radius > 0) && (screenPos.y - radius < screenHeight);
+
+  return is_visible;
+}
+
+void draw_scene(GameState &GameState) {
+  GameState.terrain->draw();
+  GameState.player->draw();
+  GameState.player->tether.draw();
+  GameState.player->rope.draw();
+
+  for (auto &animal : GameState.animals) {
+    if (is_in_camera_view(animal->pos, animal->species.radius, GameState.camera,
+                          GameState.screenWidth, GameState.screenHeight))
+      animal->draw();
+  }
+  GameState.fence->draw(GameState);
+  for (const auto &pen : GameState.pens) {
+    if (pen) {      // Check if the unique_ptr is not null
+      pen->draw();  // Call the draw method of Pen
+    }
+  }
+  // GameState.pens.draw();
 }
 
 void UnloadResources(Shader shadowShader, RenderTexture2D shadowMap,
@@ -225,11 +242,14 @@ void RenderSceneToTexture(RenderTexture2D &dofTexture, Camera3D &camera,
   EndTextureMode();
 }
 
-void HandleWindowResize(int &screenWidth, int &screenHeight,
-                        RenderTexture2D &dofTexture, Shader &dofShader) {
+void HandleWindowResize(GameState &GameState, int &screenWidth,
+                        int &screenHeight, RenderTexture2D &dofTexture,
+                        Shader &dofShader) {
   if (IsWindowResized()) {
     screenWidth = GetScreenWidth();
+    GameState.screenWidth = screenWidth;
     screenHeight = GetScreenHeight();
+    GameState.screenHeight = screenHeight;
 
     // Re-create the DOF texture with the new screen size
     UnloadRenderTexture(dofTexture);

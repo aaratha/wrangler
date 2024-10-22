@@ -6,8 +6,11 @@
 #include "render_utils.hpp"
 #include "terrain.hpp"
 
-GameState::GameState(const rl::Shader &shadowShader)
-    : toggleFence(false),
+GameState::GameState(const rl::Shader &shadowShader, const int screenWidth,
+                     const int screenHeight)
+    : screenWidth(screenWidth),
+      screenHeight(screenHeight),
+      toggleFence(false),
       itemActive(0),
       coins(0),
       camera(RenderUtils::SetupCamera()),

@@ -74,8 +74,8 @@ void GameLoop(vec3 lightDir, RenderTexture2D &shadowMap,
     RenderUtils::RenderSceneToTexture(dofTexture, GameState.camera,
                                       shadowShader, shadowMap, GameState);
 
-    RenderUtils::HandleWindowResize(screenWidth, screenHeight, dofTexture,
-                                    dofShader);
+    RenderUtils::HandleWindowResize(GameState, screenWidth, screenHeight,
+                                    dofTexture, dofShader);
 
     // Render final image
     BeginDrawing();
@@ -107,7 +107,7 @@ int main(void) {
     rl::Shader dofShader =
         RenderUtils::SetupDofShader(screenWidth, screenHeight);
     rl::Shader shadowShader = RenderUtils::SetupShadowShader(lightDir);
-    GameState GameState(shadowShader);
+    GameState GameState(shadowShader, screenWidth, screenHeight);
 
     RenderTexture2D shadowMap = RenderUtils::LoadShadowmapRenderTexture(
         SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);

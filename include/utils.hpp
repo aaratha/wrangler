@@ -21,6 +21,8 @@ class Terrain;
 
 class GameState {
  public:
+  int screenWidth;
+  int screenHeight;
   bool toggleFence;
   int itemActive;
   float addAnimalInterval = 2.0;
@@ -36,7 +38,8 @@ class GameState {
   std::vector<std::unique_ptr<Pen>> pens;  // Use unique_ptr here as well
   vec2 mouse_proj;
 
-  GameState(const rl::Shader &shadowShader);
+  GameState(const rl::Shader &shadowShader, const int screenWidth,
+            const int screenHeight);
   void addAnimal(const rl::Shader &shadowShader);
 };
 
