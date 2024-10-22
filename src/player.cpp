@@ -179,6 +179,26 @@ void Player::update() {
   // Normalize direction if it's non-zero to prevent diagonal speed boost
   if (Vector3Length(direction) > 0.0f) {
     direction = Vector3Normalize(direction);
+    // Calculate the rotation quaternion from the current forward direction (0,
+    vec3 forward = vec3(0.0f, 0.0f, -1.0f);  // Default forward direction
+
+    // Find the angle between the forward vector and the new direction in the XZ
+    // plane
+    float angle =
+        atan2f(direction.x, direction.z);  // Yaw angle around the Y-axis
+
+    // Build rotation matrix around the Y-axis
+    Matrix rotationMatrix = MatrixRotateY(angle);
+
+    // Apply translation to the player's position
+    Matrix translationMatrix = MatrixTranslate(pos.x, pos.y, pos.z);
+
+    // Combine the rotation and translation into the model's transform
+    model.transform = MatrixMultiply(rotationMatrix, translationMatrix);
+  } else {
+    // Only apply translation if no movement to avoid unnecessary rotation
+    // changes
+    model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
   }
 
   // Apply movement speed
@@ -188,7 +208,6 @@ void Player::update() {
   pos = lerp3D(pos, targ, 0.4);
 
   // Update player model transformation
-  model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
 
   // Update center of mass (com)
   com = Vector3Add(Vector3Scale(pos, 1.0f - weight),

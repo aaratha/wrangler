@@ -1,7 +1,8 @@
 #include "render_utils.hpp"
-#include "raygui.h"
 
 #include <string>
+
+#include "raygui.h"
 
 namespace RenderUtils {
 
@@ -23,7 +24,7 @@ Camera3D SetupCamera() {
 Camera3D SetupLightCamera() {
   Camera3D lightCam = (Camera3D){0};
   lightCam.position = Vector3Normalize(
-      vec3{-10.0, 70.0, 10.0}); // Vector3Scale(lightDir, -15.0f);
+      vec3{-10.0, 70.0, 10.0});  // Vector3Scale(lightDir, -15.0f);
   lightCam.target = Vector3Zero();
   // Use an orthographic projection for directional lights
   lightCam.projection = CAMERA_ORTHOGRAPHIC;
@@ -35,7 +36,7 @@ Camera3D SetupLightCamera() {
 RenderTexture2D LoadShadowmapRenderTexture(int width, int height) {
   RenderTexture2D target = {0};
 
-  target.id = rlLoadFramebuffer(0, 0); // Load an empty framebuffer
+  target.id = rlLoadFramebuffer(0, 0);  // Load an empty framebuffer
   target.texture.width = width;
   target.texture.height = height;
 
@@ -47,7 +48,7 @@ RenderTexture2D LoadShadowmapRenderTexture(int width, int height) {
     target.depth.id = rlLoadTextureDepth(width, height, false);
     target.depth.width = width;
     target.depth.height = height;
-    target.depth.format = 19; // DEPTH_COMPONENT_24BIT?
+    target.depth.format = 19;  // DEPTH_COMPONENT_24BIT?
     target.depth.mipmaps = 1;
 
     // Attach depth texture to FBO
@@ -86,14 +87,16 @@ void draw_scene(GameState &GameState) {
   }
   GameState.fence->draw(GameState);
   for (const auto &pen : GameState.pens) {
-    if (pen) {     // Check if the unique_ptr is not null
-      pen->draw(); // Call the draw method of Pen
+    if (pen) {      // Check if the unique_ptr is not null
+      pen->draw();  // Call the draw method of Pen
     }
   }
   // GameState.pens.draw();
 }
 
 void update_camera(Camera3D &camera, std::unique_ptr<Player> &player) {
+  float fov_ext = 70.0;
+  float fov_rest = 60.0;
   camera.target.x = lerp_to(camera.target.x, player->com.x, 0.2f);
   camera.target.z = lerp_to(camera.target.z, player->com.z, 0.2f);
   camera.target.y = 0.0f;
@@ -101,6 +104,11 @@ void update_camera(Camera3D &camera, std::unique_ptr<Player> &player) {
   // vec3{0.0, 15.0, 8.0}, 0.9);
   camera.position = player->pos + CAMERA_OFFSET;
   camera.position.x = player->com.x + CAMERA_OFFSET.x;
+  if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && camera.fovy < fov_ext) {
+    camera.fovy = lerp_to(camera.fovy, fov_ext, 0.1f);
+  } else if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT) && camera.fovy > fov_rest) {
+    camera.fovy = lerp_to(camera.fovy, fov_rest, 0.1f);
+  }
 
 #if defined(_WIN32) || defined(_WIN64)
   camera.fovy -= 3 * GetMouseWheelMove();
@@ -247,4 +255,4 @@ void DrawGUI(GameState &GameState, int &screenWidth, int &screenHeight) {
                        static_cast<float>(margin), textWidth, textHeight},
            labelText.c_str());
 }
-} // namespace RenderUtils
+}  // namespace RenderUtils
