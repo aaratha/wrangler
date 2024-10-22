@@ -142,7 +142,7 @@ void Rope::update(vec3 playerPos, vec3 tetherPos, float dt) {
 void Rope::draw() {
   for (int i = 0; i < num_points - 1; i++) {
     vec3 segment_dir = points[i + 1] - points[i];
-    vec3 midpoint = points[i] + segment_dir * 0.5f;
+    vec3 midpoint = points[i] + segment_dir * 0.75f;
     DrawCylinderEx(points[i], midpoint, thickness, thickness, sides, color);
   }
 }

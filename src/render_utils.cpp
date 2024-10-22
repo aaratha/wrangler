@@ -29,7 +29,7 @@ Camera3D SetupLightCamera() {
   // Use an orthographic projection for directional lights
   lightCam.projection = CAMERA_ORTHOGRAPHIC;
   lightCam.up = (Vector3){0.0f, 1.0f, 0.0f};
-  lightCam.fovy = 50.0f;
+  lightCam.fovy = 80.0f;
   return lightCam;
 }
 
