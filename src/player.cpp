@@ -191,14 +191,14 @@ void Player::update() {
     Matrix rotationMatrix = MatrixRotateY(angle);
 
     // Apply translation to the player's position
-    Matrix translationMatrix = MatrixTranslate(pos.x, pos.y, pos.z);
+    Matrix translationMatrix = MatrixTranslate(pos.x, pos.y + 0.5, pos.z);
 
     // Combine the rotation and translation into the model's transform
     model.transform = MatrixMultiply(rotationMatrix, translationMatrix);
   } else {
     // Only apply translation if no movement to avoid unnecessary rotation
     // changes
-    model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
+    model.transform = MatrixTranslate(pos.x, pos.y + 0.5, pos.z);
   }
 
   // Apply movement speed
