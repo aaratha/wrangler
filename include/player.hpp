@@ -56,6 +56,8 @@ class Player {
   vec3 targ;
   float angle = 0.0;
   float angleTarg = 0.0;
+  float tilt = 0.0;
+  float tiltTarg = 0.0;
   float movementSpeed;
   Tether tether;
   Rope rope;

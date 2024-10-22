@@ -162,7 +162,6 @@ Player::Player(vec3 startPos, float speed, Shader shader)
 
 void Player::update() {
   vec3 direction = vec3(0.0f, 0.0f, 0.0f);  // Movement direction
-
   if (IsKeyDown(KEY_W)) {
     direction += vec3(0.0f, 0.0f, -1.0f);  // Move forward
   }
@@ -179,34 +178,47 @@ void Player::update() {
   // Normalize direction if it's non-zero to prevent diagonal speed boost
   if (Vector3Length(direction) > 0.0f) {
     direction = Vector3Normalize(direction);
-    // Calculate the rotation quaternion from the current forward direction (0,
     vec3 forward = vec3(-1.0f, 0.0f, 0.0f);  // Default forward direction
-
     float newAngleTarg = atan2f(direction.x, direction.z);
-
     // Find the shortest path to the new angle
     float angleDiff = shortestAngleDifference(angleTarg, newAngleTarg);
     angleTarg = normalizeAngle(angleTarg + angleDiff);
+
+    // Calculate tilt based on turning rate
+    float turnRate = angleDiff;  // How fast we're turning
+    float maxTiltAngle = -0.3f;  // Maximum tilt in radians (about 30 degrees)
+    tiltTarg =
+        turnRate * maxTiltAngle;  // Negative because we want to tilt into turns
+    tiltTarg =
+        fmaxf(fminf(tiltTarg, maxTiltAngle), -maxTiltAngle);  // Clamp tilt
+  } else {
+    // If not moving, gradually return tilt to zero
+    tiltTarg = 0.0f;
   }
-  // Smoothly interpolate using the shortest path
+
+  // Smoothly interpolate rotation angle
   float angleDiff = shortestAngleDifference(angle, angleTarg);
   angle = normalizeAngle(angle + angleDiff * 0.1f);
-  // Build rotation matrix around the Y-axis
-  Matrix rotationMatrix = MatrixRotateY(angle - (3.14 / 2));
 
-  // Apply translation to the player's position
-  Matrix translationMatrix = MatrixTranslate(pos.x, pos.y + 0.5, pos.z);
+  // Smoothly interpolate tilt
+  tilt = lerp_to(tilt, tiltTarg, 0.1);
 
-  // Combine the rotation and translation into the model's transform
-  model.transform = MatrixMultiply(rotationMatrix, translationMatrix);
+  // Build rotation matrices
+  Matrix rotationY = MatrixRotateY(angle - (3.14f / 2));
+  Matrix rotationZ = MatrixRotateZ(-tilt);  // Apply tilt around Z axis
+  Matrix combinedRotation = MatrixMultiply(rotationZ, rotationY);
+
+  // Apply translation
+  Matrix translationMatrix = MatrixTranslate(pos.x, pos.y + 0.5f, pos.z);
+
+  // Combine all transformations
+  model.transform = MatrixMultiply(combinedRotation, translationMatrix);
 
   // Apply movement speed
   targ += direction * movementSpeed;
 
   // Interpolate position smoothly
-  pos = lerp3D(pos, targ, 0.4);
-
-  // Update player model transformation
+  pos = lerp3D(pos, targ, 0.4f);
 
   // Update center of mass (com)
   com = Vector3Add(Vector3Scale(pos, 1.0f - weight),
