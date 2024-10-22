@@ -135,8 +135,8 @@ void draw_scene(GameState &GameState) {
   }
   GameState.fence->draw(GameState);
   for (const auto &pen : GameState.pens) {
-    if (pen) {      // Check if the unique_ptr is not null
-      pen->draw();  // Call the draw method of Pen
+    if (pen) {               // Check if the unique_ptr is not null
+      pen->draw(GameState);  // Call the draw method of Pen
     }
   }
   // GameState.pens.draw();

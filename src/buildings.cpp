@@ -268,7 +268,7 @@ void Fence::draw(GameState &GameState) {
                WHITE);
 }
 
-void Pen::draw() {
+void Pen::draw(GameState &GameState) {
   for (const auto &segment : rope_points) {
     for (size_t i = 0; i < segment.size() - 1; i++) {
       Vector3 start = segment[i];
@@ -281,7 +281,10 @@ void Pen::draw() {
                    0.1, 8, GRAY);
   }
   for (auto &coin : contained_coins) {
-    coin.draw();
+    if (RenderUtils::is_in_camera_view(coin.pos, coin.radius, GameState.camera,
+                                       GameState.screenWidth,
+                                       GameState.screenHeight))
+      coin.draw();
   }
 }
 
