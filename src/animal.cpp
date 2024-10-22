@@ -5,22 +5,22 @@ Species::Species(SpeciesType type) : type(type) {
     case SpeciesType::NULL_SPECIES:
       color = BLUE;
       name = "Null Species";
-      radius = 0.5;
+      radius = 0.7;
       break;
     case SpeciesType::WOLF:
       color = GRAY;
       name = "Wolf";
-      radius = 0.5;
+      radius = 0.7;
       break;
     case SpeciesType::SHEEP:
       color = WHITE;
       name = "Sheep";
-      radius = 0.5;
+      radius = 0.7;
       break;
     case SpeciesType::COW:
       color = BROWN;
       name = "Cow";
-      radius = 0.5;
+      radius = 0.7;
       break;
   }
 }

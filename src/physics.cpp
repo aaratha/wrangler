@@ -73,9 +73,9 @@ void check_grid_collisions(const Grid &grid, const GridKey &key,
 // Check collisions within a grid cell and its neighbors
 void handle_collisions(GameState &GameState, int &substeps,
                        std::vector<std::unique_ptr<Pen>> &pens) {
-  const float playerRadius = 1.5f;
+  const float playerRadius = 1.0f;
   const float tetherRadius = 0.5f;       // From the Tether constructor
-  const float ropeSegmentRadius = 0.5f;  // From the Rope constructor
+  const float ropeSegmentRadius = 0.7f;  // From the Rope constructor
 
   // Player cube vs Animals
   for (int i = 0; i < substeps; i++) {
