@@ -94,29 +94,35 @@ void draw_scene(GameState &GameState) {
   // GameState.pens.draw();
 }
 
-void update_camera(Camera3D &camera, std::unique_ptr<Player> &player) {
+void update_camera(GameState &GameState) {
   float fov_ext = 70.0;
   float fov_rest = 60.0;
-  camera.target.x = lerp_to(camera.target.x, player->com.x, 0.2f);
-  camera.target.z = lerp_to(camera.target.z, player->com.z, 0.2f);
-  camera.target.y = 0.0f;
-  // camera.position = lerp3D(camera.position, player.com +
-  // vec3{0.0, 15.0, 8.0}, 0.9);
-  camera.position = player->pos + CAMERA_OFFSET;
-  camera.position.x = player->com.x + CAMERA_OFFSET.x;
-  if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && camera.fovy < fov_ext) {
-    camera.fovy = lerp_to(camera.fovy, fov_ext, 0.1f);
-  } else if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT) && camera.fovy > fov_rest) {
-    camera.fovy = lerp_to(camera.fovy, fov_rest, 0.1f);
+  GameState.camera.target.x =
+      lerp_to(GameState.camera.target.x, GameState.player->com.x, 0.2f);
+  GameState.camera.target.z =
+      lerp_to(GameState.camera.target.z, GameState.player->com.z, 0.2f);
+  GameState.camera.target.y = 0.0f;
+  // GameState.camera.position = lerp3D(GameState.camera.position,
+  // GameState.player.com + vec3{0.0, 15.0, 8.0}, 0.9);
+  GameState.camera.position = GameState.player->pos + CAMERA_OFFSET;
+  GameState.camera.position.x = GameState.player->com.x + CAMERA_OFFSET.x;
+  if (GameState.itemActive == 0) {
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
+        GameState.camera.fovy < fov_ext) {
+      GameState.camera.fovy = lerp_to(GameState.camera.fovy, fov_ext, 0.1f);
+    } else if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
+               GameState.camera.fovy > fov_rest) {
+      GameState.camera.fovy = lerp_to(GameState.camera.fovy, fov_rest, 0.1f);
+    }
   }
 
 #if defined(_WIN32) || defined(_WIN64)
-  camera.fovy -= 3 * GetMouseWheelMove();
+  GameState.camera.fovy -= 3 * GetMouseWheelMove();
 #else
-  camera.fovy -= GetMouseWheelMove();
+  GameState.camera.fovy -= GetMouseWheelMove();
 #endif
-  camera.fovy = Clamp(camera.fovy, 20.0f, 100.0f);
-  camera.fovy = Clamp(camera.fovy, 20.0f, 100.0f);
+  GameState.camera.fovy = Clamp(GameState.camera.fovy, 20.0f, 100.0f);
+  GameState.camera.fovy = Clamp(GameState.camera.fovy, 20.0f, 100.0f);
 }
 
 void UnloadResources(Shader shadowShader, RenderTexture2D shadowMap,
