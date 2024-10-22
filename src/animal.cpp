@@ -2,22 +2,26 @@
 
 Species::Species(SpeciesType type) : type(type) {
   switch (type) {
-  case SpeciesType::NULL_SPECIES:
-    color = BLUE;
-    name = "Null Species";
-    break;
-  case SpeciesType::WOLF:
-    color = GRAY;
-    name = "Wolf";
-    break;
-  case SpeciesType::SHEEP:
-    color = WHITE;
-    name = "Sheep";
-    break;
-  case SpeciesType::COW:
-    color = BROWN;
-    name = "Cow";
-    break;
+    case SpeciesType::NULL_SPECIES:
+      color = BLUE;
+      name = "Null Species";
+      radius = 0.5;
+      break;
+    case SpeciesType::WOLF:
+      color = GRAY;
+      name = "Wolf";
+      radius = 0.5;
+      break;
+    case SpeciesType::SHEEP:
+      color = WHITE;
+      name = "Sheep";
+      radius = 0.5;
+      break;
+    case SpeciesType::COW:
+      color = BROWN;
+      name = "Cow";
+      radius = 0.5;
+      break;
   }
 }
 
@@ -28,22 +32,25 @@ SpeciesType getRandomSpecies() {
 
   int randomNumber = dis(gen);
   switch (randomNumber) {
-  case 0:
-    return SpeciesType::WOLF;
-  case 1:
-    return SpeciesType::SHEEP;
-  case 2:
-    return SpeciesType::COW;
-  default:
-    return SpeciesType::SHEEP; // Fallback, should never happen
+    case 0:
+      return SpeciesType::WOLF;
+    case 1:
+      return SpeciesType::SHEEP;
+    case 2:
+      return SpeciesType::COW;
+    default:
+      return SpeciesType::SHEEP;  // Fallback, should never happen
   }
 }
 
 Animal::Animal(vec3 pos, float speed, Shader shader)
-    : pos(pos), speed(speed), shader(shader), lastUpdateTime(0),
+    : pos(pos),
+      speed(speed),
+      shader(shader),
+      lastUpdateTime(0),
       species(getRandomSpecies()) {
   targ = pos;
-  model = LoadModelFromMesh(GenMeshSphere(0.5, 20, 20));
+  model = LoadModelFromMesh(GenMeshSphere(species.radius, 20, 20));
   model.materials[0].shader = shader;
 }
 
@@ -73,8 +80,8 @@ void Animal::update() {
 
 void Animal::draw() { DrawModel(model, Vector3Zero(), 1.0f, species.color); }
 
-std::vector<std::unique_ptr<Animal>>
-CreateAnimals(const rl::Shader &shadowShader, int count) {
+std::vector<std::unique_ptr<Animal>> CreateAnimals(
+    const rl::Shader &shadowShader, int count) {
   std::vector<std::unique_ptr<Animal>> animals;
   for (int i = 0; i < count; i++) {
     animals.push_back(std::make_unique<Animal>(

@@ -4,7 +4,7 @@
 GridKey get_grid_key(const vec3 &pos, float grid_size) {
   return {
       static_cast<int>(pos.x / grid_size),
-      static_cast<int>(pos.z / grid_size) // 2D grid, ignoring z-axis
+      static_cast<int>(pos.z / grid_size)  // 2D grid, ignoring z-axis
   };
 }
 
@@ -17,9 +17,8 @@ void add_to_grid(Grid &grid, Animal *animal, float grid_size) {
 void check_grid_collisions(const Grid &grid, const GridKey &key,
                            const float animalRadius, const float playerRadius,
                            GameState &GameState) {
-
   static const int neighbor_offsets[3] = {
-      -1, 0, 1}; // To check neighboring cells in both x and z axes
+      -1, 0, 1};  // To check neighboring cells in both x and z axes
 
   for (int dx : neighbor_offsets) {
     for (int dz : neighbor_offsets) {
@@ -75,9 +74,8 @@ void check_grid_collisions(const Grid &grid, const GridKey &key,
 void handle_collisions(GameState &GameState, int &substeps,
                        std::vector<std::unique_ptr<Pen>> &pens) {
   const float playerRadius = 1.5f;
-  const float animalRadius = 0.5f;      // From the Animal constructor
-  const float tetherRadius = 0.5f;      // From the Tether constructor
-  const float ropeSegmentRadius = 0.5f; // From the Rope constructor
+  const float tetherRadius = 0.5f;       // From the Tether constructor
+  const float ropeSegmentRadius = 0.5f;  // From the Rope constructor
 
   // Player cube vs Animals
   for (int i = 0; i < substeps; i++) {
@@ -90,7 +88,8 @@ void handle_collisions(GameState &GameState, int &substeps,
     // Step 2: Perform collision detection using grid
     for (auto &animal : GameState.animals) {
       GridKey key = get_grid_key(animal->pos, GRID_SIZE);
-      check_grid_collisions(grid, key, animalRadius, playerRadius, GameState);
+      check_grid_collisions(grid, key, animal->species.radius, playerRadius,
+                            GameState);
     }
 
     // rope and animals
@@ -106,7 +105,7 @@ void handle_collisions(GameState &GameState, int &substeps,
                 GameState.player->rope.points[i + 1]);
             vec3 collisionNormal =
                 Vector3Normalize(Vector3Subtract(animal->pos, closestPoint));
-            float overlap = ropeSegmentRadius + animalRadius -
+            float overlap = ropeSegmentRadius + animal->species.radius -
                             Vector3Distance(closestPoint, animal->pos);
             animal->targ = Vector3Add(
                 animal->targ, Vector3Scale(collisionNormal, overlap * 0.8));
@@ -133,12 +132,13 @@ void handle_collisions(GameState &GameState, int &substeps,
 
             // if (CheckCollisionPointLine(animal->pos, start, end,
             // ropeSegmentRadius)) {
-            if (CheckCollisionSpheres(animal->pos, animalRadius, start, 0.1)) {
+            if (CheckCollisionSpheres(animal->pos, animal->species.radius,
+                                      start, 0.1)) {
               vec3 closestPoint =
                   GetClosestPointOnLineFromPoint(animal->pos, start, end);
               vec3 collisionNormal =
                   Vector3Normalize(Vector3Subtract(animal->pos, closestPoint));
-              float overlap = ropeSegmentRadius + animalRadius -
+              float overlap = ropeSegmentRadius + animal->species.radius -
                               Vector3Distance(closestPoint, animal->pos);
 
               // Update animal target position
@@ -160,11 +160,15 @@ void handle_collisions(GameState &GameState, int &substeps,
           }
         }
         for (size_t i = 0; i < pen->fixed_points.size(); ++i) {
-            if (CheckCollisionSpheres(animal->pos, animalRadius, pen->fixed_points[i], 1.0)) {
-              vec3 collisionNormal = Vector3Normalize(Vector3Subtract(animal->pos, pen->fixed_points[i]));
-              float overlap = animalRadius + 1.0 - Vector3Distance(animal->pos, pen->fixed_points[i]);
-              animal->pos = Vector3Add(animal->pos, Vector3Scale(collisionNormal, overlap));
-            }
+          if (CheckCollisionSpheres(animal->pos, animal->species.radius,
+                                    pen->fixed_points[i], 1.0)) {
+            vec3 collisionNormal = Vector3Normalize(
+                Vector3Subtract(animal->pos, pen->fixed_points[i]));
+            float overlap = animal->species.radius + 1.0 -
+                            Vector3Distance(animal->pos, pen->fixed_points[i]);
+            animal->pos =
+                Vector3Add(animal->pos, Vector3Scale(collisionNormal, overlap));
+          }
         }
       }
     }
@@ -172,12 +176,12 @@ void handle_collisions(GameState &GameState, int &substeps,
     // Player tether vs Animals
     for (auto &animal : GameState.animals) {
       if (CheckCollisionSpheres(GameState.player->tether.pos, tetherRadius,
-                                animal->pos, animalRadius)) {
+                                animal->pos, animal->species.radius)) {
         // Handle tether-animal collision
         vec3 collisionNormal = Vector3Normalize(
             Vector3Subtract(animal->pos, GameState.player->tether.pos));
         float overlap =
-            tetherRadius + animalRadius -
+            tetherRadius + animal->species.radius -
             Vector3Distance(GameState.player->tether.pos, animal->pos);
         animal->pos =
             Vector3Add(animal->pos, Vector3Scale(collisionNormal, overlap));

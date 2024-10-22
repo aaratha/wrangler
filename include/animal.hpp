@@ -1,16 +1,17 @@
 #pragma once
 
+#include <random>
+
 #include "raylib-cpp.hpp"
 #include "utils.hpp"
-
-#include <random>
 
 enum class SpeciesType { NULL_SPECIES, WOLF, SHEEP, COW };
 
 class Species {
-public:
+ public:
   SpeciesType type;
   Color color;
+  float radius;
   std::string name;
 
   Species(SpeciesType type);
@@ -19,7 +20,7 @@ public:
 SpeciesType getRandomSpecies();
 
 class Animal {
-public:
+ public:
   vec3 pos;
   vec3 targ;
   float speed;
@@ -35,5 +36,5 @@ public:
   void draw();
 };
 
-std::vector<std::unique_ptr<Animal>>
-CreateAnimals(const rl::Shader &shadowShader, int count);
+std::vector<std::unique_ptr<Animal>> CreateAnimals(
+    const rl::Shader &shadowShader, int count);
