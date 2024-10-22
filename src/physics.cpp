@@ -74,7 +74,6 @@ void check_grid_collisions(const Grid &grid, const GridKey &key,
 void handle_collisions(GameState &GameState, int &substeps,
                        std::vector<std::unique_ptr<Pen>> &pens) {
   const float playerRadius = 1.0f;
-  const float tetherRadius = 0.5f;       // From the Tether constructor
   const float ropeSegmentRadius = 0.7f;  // From the Rope constructor
 
   // Player cube vs Animals
@@ -175,13 +174,14 @@ void handle_collisions(GameState &GameState, int &substeps,
 
     // Player tether vs Animals
     for (auto &animal : GameState.animals) {
-      if (CheckCollisionSpheres(GameState.player->tether.pos, tetherRadius,
-                                animal->pos, animal->species.radius)) {
+      if (CheckCollisionSpheres(GameState.player->tether.pos,
+                                GameState.player->tether.radius, animal->pos,
+                                animal->species.radius)) {
         // Handle tether-animal collision
         vec3 collisionNormal = Vector3Normalize(
             Vector3Subtract(animal->pos, GameState.player->tether.pos));
         float overlap =
-            tetherRadius + animal->species.radius -
+            GameState.player->tether.radius + animal->species.radius -
             Vector3Distance(GameState.player->tether.pos, animal->pos);
         animal->pos =
             Vector3Add(animal->pos, Vector3Scale(collisionNormal, overlap));

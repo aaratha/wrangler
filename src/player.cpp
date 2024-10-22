@@ -4,7 +4,7 @@ Tether::Tether(Shader shader) : shader(shader) {
   pos = vec3{0.0, 1.0, 10.0};
   targ = vec3{0.0, 0.0, 10.0};
 
-  model = LoadModelFromMesh(GenMeshSphere(0.5, 20, 20));
+  model = LoadModelFromMesh(GenMeshSphere(radius, 20, 20));
   model.materials[0].shader = shader;
 }
 
@@ -49,7 +49,7 @@ void Tether::update(const Camera3D &camera, GameState &GameState,
   model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
 }
 
-void Tether::draw() { DrawModel(model, Vector3Zero(), 1.0f, BLUE); }
+void Tether::draw() { DrawModel(model, Vector3Zero(), 1.0f, GRAY); }
 
 Rope::Rope(vec3 playerPos, vec3 tetherPos, float thickness, int num_points,
            float constraint)

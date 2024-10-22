@@ -8,6 +8,7 @@ class Tether {
   vec3 pos;
   vec3 targ;
   Shader shader;
+  float radius = 0.4;
   Model model;
   float maxDistance = 4.0;
 
