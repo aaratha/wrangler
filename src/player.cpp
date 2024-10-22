@@ -180,26 +180,25 @@ void Player::update() {
   if (Vector3Length(direction) > 0.0f) {
     direction = Vector3Normalize(direction);
     // Calculate the rotation quaternion from the current forward direction (0,
-    vec3 forward = vec3(0.0f, 0.0f, -1.0f);  // Default forward direction
+    vec3 forward = vec3(-1.0f, 0.0f, 0.0f);  // Default forward direction
 
-    // Find the angle between the forward vector and the new direction in the XZ
-    // plane
-    float angle =
-        atan2f(direction.x, direction.z);  // Yaw angle around the Y-axis
+    float newAngleTarg = atan2f(direction.x, direction.z);
 
-    // Build rotation matrix around the Y-axis
-    Matrix rotationMatrix = MatrixRotateY(angle);
-
-    // Apply translation to the player's position
-    Matrix translationMatrix = MatrixTranslate(pos.x, pos.y + 0.5, pos.z);
-
-    // Combine the rotation and translation into the model's transform
-    model.transform = MatrixMultiply(rotationMatrix, translationMatrix);
-  } else {
-    // Only apply translation if no movement to avoid unnecessary rotation
-    // changes
-    model.transform = MatrixTranslate(pos.x, pos.y + 0.5, pos.z);
+    // Find the shortest path to the new angle
+    float angleDiff = shortestAngleDifference(angleTarg, newAngleTarg);
+    angleTarg = normalizeAngle(angleTarg + angleDiff);
   }
+  // Smoothly interpolate using the shortest path
+  float angleDiff = shortestAngleDifference(angle, angleTarg);
+  angle = normalizeAngle(angle + angleDiff * 0.1f);
+  // Build rotation matrix around the Y-axis
+  Matrix rotationMatrix = MatrixRotateY(angle - (3.14 / 2));
+
+  // Apply translation to the player's position
+  Matrix translationMatrix = MatrixTranslate(pos.x, pos.y + 0.5, pos.z);
+
+  // Combine the rotation and translation into the model's transform
+  model.transform = MatrixMultiply(rotationMatrix, translationMatrix);
 
   // Apply movement speed
   targ += direction * movementSpeed;
@@ -217,4 +216,6 @@ void Player::update() {
 void Player::draw() {
   // Draw the cube with WHITE as base color (shader will modify it)
   DrawModel(model, Vector3Zero(), 1.0f, GRAY);
+  // DrawModelEx(model, Vector3Zero(), vec3(0.0, 1.0, 0.0), 0.0,
+  //            vec3(1.0, 1.0, 1.0), GRAY);
 }

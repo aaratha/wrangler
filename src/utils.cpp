@@ -198,3 +198,16 @@ vec2 generateRandomPointInTriangle(const std::array<vec2, 3> &tri) {
 }
 
 void addAnimal(const rl::Shader &shadowShader) {}
+
+float normalizeAngle(float angle) {
+  // Normalize angle to [-PI, PI]
+  while (angle > PI) angle -= 2 * PI;
+  while (angle < -PI) angle += 2 * PI;
+  return angle;
+}
+
+float shortestAngleDifference(float from, float to) {
+  // Find the shortest angular distance between two angles
+  float diff = normalizeAngle(to - from);
+  return diff;
+}

@@ -74,3 +74,7 @@ std::array<vec2, 3> selectRandomTriangle(
 float calculateTriangleArea(const vec2 &p1, const vec2 &p2, const vec2 &p3);
 
 vec2 generateRandomPointInTriangle(const std::array<vec2, 3> &tri);
+
+float normalizeAngle(float angle);
+
+float shortestAngleDifference(float from, float to);

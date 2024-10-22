@@ -54,6 +54,8 @@ class Player {
  public:
   vec3 pos;
   vec3 targ;
+  float angle = 0.0;
+  float angleTarg = 0.0;
   float movementSpeed;
   Tether tether;
   Rope rope;
