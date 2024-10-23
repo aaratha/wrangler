@@ -54,7 +54,7 @@ class Player {
  public:
   vec3 pos;
   vec3 targ;
-  float radius = 1.0;
+  float radius = 0.8;
   float angle = 0.0;
   float angleTarg = 0.0;
   float tilt = 0.0;

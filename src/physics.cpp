@@ -15,8 +15,7 @@ void add_to_grid(Grid &grid, Animal *animal, float grid_size) {
 }
 
 void check_grid_collisions(const Grid &grid, const GridKey &key,
-                           const float animalRadius, const float playerRadius,
-                           GameState &GameState) {
+                           const float animalRadius, GameState &GameState) {
   static const int neighbor_offsets[3] = {
       -1, 0, 1};  // To check neighboring cells in both x and z axes
 
@@ -30,12 +29,13 @@ void check_grid_collisions(const Grid &grid, const GridKey &key,
 
         // Player vs Animals in nearby grid cells
         for (Animal *animal : nearbyAnimals) {
-          if (CheckCollisionSpheres(GameState.player->pos, playerRadius,
-                                    animal->pos, animalRadius)) {
+          if (CheckCollisionSpheres(GameState.player->pos,
+                                    GameState.player->radius, animal->pos,
+                                    animalRadius)) {
             // Handle player-animal collision
             vec3 collisionNormal = Vector3Normalize(
                 Vector3Subtract(animal->pos, GameState.player->pos));
-            float overlap = playerRadius + animalRadius -
+            float overlap = GameState.player->radius + animalRadius -
                             Vector3Distance(GameState.player->pos, animal->pos);
             GameState.player->pos =
                 Vector3Subtract(GameState.player->pos,
@@ -87,8 +87,7 @@ void handle_collisions(GameState &GameState, int &substeps,
     // Step 2: Perform collision detection using grid
     for (auto &animal : GameState.animals) {
       GridKey key = get_grid_key(animal->pos, GRID_SIZE);
-      check_grid_collisions(grid, key, animal->species.radius, playerRadius,
-                            GameState);
+      check_grid_collisions(grid, key, animal->species.radius, GameState);
     }
 
     // rope and animals

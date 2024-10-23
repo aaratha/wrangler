@@ -209,10 +209,13 @@ void Player::update() {
   Matrix combinedRotation = MatrixMultiply(rotationZ, rotationY);
 
   // Apply translation
-  Matrix translationMatrix = MatrixTranslate(pos.x, pos.y + 0.5f, pos.z);
 
-  // Combine all transformations
-  model.transform = MatrixMultiply(combinedRotation, translationMatrix);
+  Matrix scaleMatrix =
+      MatrixScale(1.5f, 1.5f, 1.5f);  // Adjust these values as needed
+  Matrix rotationAndScale = MatrixMultiply(combinedRotation, scaleMatrix);
+
+  Matrix translationMatrix = MatrixTranslate(pos.x, pos.y + 0.5f, pos.z);
+  model.transform = MatrixMultiply(rotationAndScale, translationMatrix);
 
   // Apply movement speed
   targ += direction * movementSpeed;
