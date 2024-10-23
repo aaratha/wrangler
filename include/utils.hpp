@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -78,3 +79,5 @@ vec2 generateRandomPointInTriangle(const std::array<vec2, 3> &tri);
 float normalizeAngle(float angle);
 
 float shortestAngleDifference(float from, float to);
+
+vec3 make_vec3(float e);

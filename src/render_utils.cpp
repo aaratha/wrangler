@@ -152,7 +152,10 @@ void UnloadResources(Shader shadowShader, RenderTexture2D shadowMap,
     UnloadModel(animal->model);
   }
   UnloadShadowmapRenderTexture(shadowMap);
-  UnloadModel(GameState.terrain->model);
+  UnloadModel(GameState.terrain->planeModel);
+  for (auto &blade : GameState.terrain->grass) {
+    UnloadModel(blade.model);
+  }
   UnloadShader(dofShader);
   UnloadRenderTexture(dofTexture);
 }

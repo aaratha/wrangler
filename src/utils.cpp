@@ -15,7 +15,7 @@ GameState::GameState(const rl::Shader &shadowShader, const int screenWidth,
       coins(0),
       camera(RenderUtils::SetupCamera()),
       lightCam(RenderUtils::SetupLightCamera()),
-      terrain(std::make_unique<Terrain>(shadowShader)),
+      terrain(std::make_unique<Terrain>(shadowShader, 10)),
       player(std::make_unique<Player>(vec3{0.0, 1.0, 0.0}, 0.2, shadowShader)),
       animals(CreateAnimals(shadowShader, 1)),
       fence(std::make_unique<Fence>()),
@@ -211,3 +211,5 @@ float shortestAngleDifference(float from, float to) {
   float diff = normalizeAngle(to - from);
   return diff;
 }
+
+vec3 make_vec3(float e) { return vec3{e, e, e}; }
