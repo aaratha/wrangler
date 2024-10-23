@@ -13,9 +13,9 @@ void Tether::update(const Camera3D &camera, GameState &GameState,
   // Get mouse position
   if (GameState.itemActive == 0) {
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && maxDistance < 15.0)
-      maxDistance += 0.5;
+      maxDistance = lerp_to(maxDistance, 15.0, 0.1);
     if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT) && maxDistance > 4.0)
-      maxDistance -= 0.5;
+      maxDistance = lerp_to(maxDistance, 4.0, 0.1);
   }
 
   Vector2 mousePos = GetMousePosition();

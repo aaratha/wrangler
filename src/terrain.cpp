@@ -5,7 +5,7 @@ Blade::Blade(Shader shadowShader, vec3 pos) : pos(pos) {
   if (model.meshCount == 0) {
     std::cerr << "Failed to load grass model!" << std::endl;
   }
-  model.materials[0].shader = shadowShader;
+  // model.materials[0].shader = shadowShader;
 }
 
 void Blade::draw() {
@@ -17,9 +17,8 @@ Terrain::Terrain(Shader shadowShader, int bladeCount) {
   planeModel = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
   planeModel.materials[0].shader = shadowShader;
   for (int i = 0; i < bladeCount; i++) {
-    grass.push_back(
-        Blade(shadowShader, (vec3){(float)GetRandomValue(-10, 10), 0.0f,
-                                   (float)GetRandomValue(-10, 10)}));
+    grass.push_back(Blade(shadowShader, (vec3){GetRandomFloat(-10, 10), 0.0f,
+                                               GetRandomFloat(-10, 10)}));
   }
 }
 
