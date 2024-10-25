@@ -1,22 +1,26 @@
 #version 330
 
 // Input vertex attributes
-in vec3 vertexPosition; // vertex position relative to origin
-in vec2 vertexTexCoord; // texture coord of vertex
-in mat4 instanceTransform; // model transformation matrix
+in vec3 vertexPosition;      // Vertex position relative to origin
+in vec2 vertexTexCoord;      // Texture coordinate of vertex
+in mat4 instanceTransform;   // Model transformation matrix for each instance
 
 // Input uniform values
-uniform mat4 mvp; // model-view-projection
+uniform mat4 mvp;            // Model-View-Projection matrix
 
 // Output vertex attributes (to fragment shader)
 out vec2 fragTexCoord;
+out vec3 fragPosition;
 
 void main()
 {
-    // Pass texture coord
+    // Pass texture coordinate to fragment shader
     fragTexCoord = vertexTexCoord;
-    // Compute MVP for current instance
-    mat4 mvpi = mvp*instanceTransform;
-    // Calculate final vertex position
-    gl_Position = mvpi*vec4(vertexPosition, 1.0);
+
+    // Calculate transformed position in world space
+    vec4 worldPosition = instanceTransform * vec4(vertexPosition, 1.0);
+    fragPosition = worldPosition.xyz;
+
+    // Calculate final vertex position in screen space
+    gl_Position = mvp * worldPosition;
 }

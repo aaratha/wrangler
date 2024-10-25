@@ -9,7 +9,7 @@
 GameState::GameState(const rl::Shader &shadowShader, const int screenWidth, const int screenHeight)
     : screenWidth(screenWidth), screenHeight(screenHeight), toggleFence(false), itemActive(0),
       coins(0), camera(RenderUtils::SetupCamera()), lightCam(RenderUtils::SetupLightCamera()),
-      terrain(std::make_unique<Terrain>(shadowShader, 5000)),
+      terrain(std::make_unique<Terrain>(shadowShader, 20000)),
       player(std::make_unique<Player>(vec3{0.0, 1.0, 0.0}, 0.2, shadowShader)),
       animals(CreateAnimals(shadowShader, 1)), fence(std::make_unique<Fence>()), pens() {
   // The unique_ptrs will automatically handle memory management

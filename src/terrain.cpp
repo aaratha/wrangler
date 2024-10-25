@@ -14,10 +14,10 @@ Terrain::Terrain(Shader shadowShader, int bladeCount)
   Shader instancedShader = LoadShader("resources/shaders/grass.vs", "resources/shaders/grass.fs");
   instancedShader.locs[SHADER_LOC_MATRIX_MODEL] =
       GetShaderLocationAttrib(instancedShader, "instanceTransform");
+  // Assuming shader is your loaded shader program
 
   Material matInstances = LoadMaterialDefault();
   matInstances.shader = instancedShader;
-  matInstances.maps[MATERIAL_MAP_DIFFUSE].color = GREEN;
 
   planeModel = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
   planeModel.materials[0].shader = shadowShader;
@@ -27,7 +27,7 @@ Terrain::Terrain(Shader shadowShader, int bladeCount)
   transforms = (Matrix *)RL_CALLOC(bladeCount, sizeof(Matrix));
 
   for (int i = 0; i < bladeCount; i++) {
-    Vector3 position = (Vector3){GetRandomFloat(-10, 10), 0.0f, GetRandomFloat(-10, 10)};
+    Vector3 position = (Vector3){GetRandomFloat(-20, 20), 0.0f, GetRandomFloat(-20, 20)};
     Matrix translation = MatrixTranslate(position.x, position.y, position.z);
 
     Vector3 axis = Vector3Normalize((Vector3){1.0, 0.0, 0.0});
@@ -41,7 +41,7 @@ Terrain::Terrain(Shader shadowShader, int bladeCount)
 void Terrain::draw() {
   // Draw the terrain (plane)
   DrawModelEx(planeModel, (Vector3){0.0f, -0.5f, 0.0f}, Vector3Zero(), 0.0f,
-              (Vector3){80.0f, 1.0f, 80.0f}, (Color){50, 168, 82, 255});
+              (Vector3){80.0f, 1.0f, 80.0f}, (Color){51, 102, 51, 255});
 
   // Then try instancing
   DrawMeshInstanced(blade.model.meshes[0], blade.model.materials[0], transforms, bladeCount);
