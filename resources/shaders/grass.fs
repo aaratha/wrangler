@@ -23,7 +23,7 @@ void main()
     vec4 colorBottom = vec4(0.1, 0.2, 0.1, 1.0);    // Dark green
     vec4 colorLower = vec4(0.3, 0.6, 0.3, 1.0);     // Medium dark green
     vec4 colorUpper = vec4(0.5, 0.8, 0.5, 1.0);     // Medium light green
-    vec4 colorTop = vec4(0.7, 1.0, 0.7, 1.0);       // Light green
+    vec4 colorTop = vec4(0.6, 0.9, 0.6, 1.0);       // Light green
 
     // Create a smooth gradient between all four colors
     vec4 gradientColor;

@@ -24,16 +24,18 @@ Terrain::Terrain(Shader shadowShader, int bladeCount)
   transforms = (Matrix *)RL_CALLOC(bladeCount, sizeof(Matrix));
 
   // Add scale factor for blade size
-  float bladeSizeMin = 2.0f; // Minimum blade size (was implicitly 1.0)
-  float bladeSizeMax = 2.5f; // Maximum blade size
+  float bladeSizeMin = 1.3f; // Minimum blade size (was implicitly 1.0)
+  float bladeSizeMax = 1.7f; // Maximum blade size
+  float bladeVertical = 1.5f;
+  int area = 10;
 
   for (int i = 0; i < bladeCount; i++) {
-    Vector3 position = (Vector3){GetRandomFloat(-20, 20), 0.0f, GetRandomFloat(-20, 20)};
+    Vector3 position = (Vector3){GetRandomFloat(-area, area), 0.0f, GetRandomFloat(-area, area)};
     Matrix translation = MatrixTranslate(position.x, position.y, position.z);
 
     // Add random scaling to each blade
     float randomSize = GetRandomFloat(bladeSizeMin, bladeSizeMax);
-    Matrix scale = MatrixScale(randomSize, randomSize, randomSize);
+    Matrix scale = MatrixScale(randomSize, randomSize * bladeVertical, randomSize);
 
     Vector3 axis = Vector3Normalize((Vector3){1.0, 0.0, 0.0});
     float angle = GetRandomFloat(150, 180) * DEG2RAD;
