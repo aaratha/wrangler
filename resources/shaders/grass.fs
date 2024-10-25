@@ -16,15 +16,26 @@ void main()
     // Fetch texel color from texture sampler
     vec4 texelColor = texture(texture0, fragTexCoord);
 
-    // Compute gradient factor using the Y position of fragPosition
+    // Normalize Y position to [0,1] range
+    float gradientFactor = clamp(fragPosition.y + 0.2, 0.0, 1.0);
 
+    // Define four colors for the gradient
+    vec4 colorBottom = vec4(0.1, 0.2, 0.1, 1.0);    // Dark green
+    vec4 colorLower = vec4(0.3, 0.6, 0.3, 1.0);     // Medium dark green
+    vec4 colorUpper = vec4(0.5, 0.8, 0.5, 1.0);     // Medium light green
+    vec4 colorTop = vec4(0.7, 1.0, 0.7, 1.0);       // Light green
 
-        float gradientFactor = clamp(fragPosition.y + 0.2, 0.0, 1.0);
-
-
-    // Use gradientFactor to blend from dark green to light green
-    vec4 gradientColor = mix(vec4(0.2, 0.4, 0.2, 1.0), vec4(0.5, 1.0, 0.5, 1.0), gradientFactor);
-
+    // Create a smooth gradient between all four colors
+    vec4 gradientColor;
+    if(gradientFactor < 0.33) {
+        gradientColor = mix(colorBottom, colorLower, gradientFactor * 3.0);
+    }
+    else if(gradientFactor < 0.66) {
+        gradientColor = mix(colorLower, colorUpper, (gradientFactor - 0.33) * 3.0);
+    }
+    else {
+        gradientColor = mix(colorUpper, colorTop, (gradientFactor - 0.66) * 3.0);
+    }
 
     // Combine diffuse color, texture color, and gradient color
     finalColor = colDiffuse * texelColor * gradientColor;
