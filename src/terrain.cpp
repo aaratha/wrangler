@@ -8,24 +8,41 @@ Blade::Blade(Shader shadowShader, vec3 pos) : pos(pos) {
   // model.materials[0].shader = shadowShader;
 }
 
-void Blade::draw() {
-  DrawModelEx(model, pos, (Vector3){1.0f, 0.0f, 0.0f}, 180.0f, make_vec3(1.5),
-              (Color){60, 178, 92, 255});
-}
+Terrain::Terrain(Shader shadowShader, int bladeCount)
+    : blade(shadowShader, make_vec3(0.0f)), bladeCount(bladeCount) {
 
-Terrain::Terrain(Shader shadowShader, int bladeCount) {
+  Shader instancedShader = LoadShader("resources/shaders/grass.vs", "resources/shaders/grass.fs");
+  instancedShader.locs[SHADER_LOC_MATRIX_MODEL] =
+      GetShaderLocationAttrib(instancedShader, "instanceTransform");
+
+  Material matInstances = LoadMaterialDefault();
+  matInstances.shader = instancedShader;
+  matInstances.maps[MATERIAL_MAP_DIFFUSE].color = GREEN;
+
   planeModel = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
   planeModel.materials[0].shader = shadowShader;
+  blade.model.materials[0] = matInstances;
+
+  // Allocate memory for transformations
+  transforms = (Matrix *)RL_CALLOC(bladeCount, sizeof(Matrix));
+
   for (int i = 0; i < bladeCount; i++) {
-    grass.push_back(Blade(shadowShader, (vec3){GetRandomFloat(-10, 10), 0.0f,
-                                               GetRandomFloat(-10, 10)}));
+    Vector3 position = (Vector3){GetRandomFloat(-10, 10), 0.0f, GetRandomFloat(-10, 10)};
+    Matrix translation = MatrixTranslate(position.x, position.y, position.z);
+
+    Vector3 axis = Vector3Normalize((Vector3){1.0, 0.0, 0.0});
+    float angle = GetRandomFloat(100, 180) * DEG2RAD;
+    Matrix rotation = MatrixRotate(axis, angle);
+
+    transforms[i] = MatrixMultiply(rotation, translation);
   }
 }
 
 void Terrain::draw() {
+  // Draw the terrain (plane)
   DrawModelEx(planeModel, (Vector3){0.0f, -0.5f, 0.0f}, Vector3Zero(), 0.0f,
               (Vector3){80.0f, 1.0f, 80.0f}, (Color){50, 168, 82, 255});
-  for (auto blade : grass) {
-    blade.draw();
-  }
+
+  // Then try instancing
+  DrawMeshInstanced(blade.model.meshes[0], blade.model.materials[0], transforms, bladeCount);
 }

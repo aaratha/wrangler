@@ -4,7 +4,7 @@
 #include "utils.hpp"
 
 class Blade {
- public:
+public:
   vec3 pos;
   Model model;
 
@@ -13,10 +13,14 @@ class Blade {
 };
 
 class Terrain {
- public:
+public:
   vec3 pos;
   Model planeModel;
+  Blade blade;
+  int bladeCount;
+  Matrix *transforms;
   std::vector<Blade> grass;
+  Shader instanceShader;
   Terrain(Shader shadowShader, int bladeCount);
   void draw();
 };

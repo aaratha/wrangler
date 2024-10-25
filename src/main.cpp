@@ -19,9 +19,8 @@
 
 const float PHYSICS_TIME = 1.0 / 60.0;
 
-void GameLoop(vec3 lightDir, RenderTexture2D &shadowMap,
-              rl::Shader &shadowShader, rl::Shader &dofShader,
-              RenderTexture2D &dofTexture, int screenWidth, int screenHeight,
+void GameLoop(vec3 lightDir, RenderTexture2D &shadowMap, rl::Shader &shadowShader,
+              rl::Shader &dofShader, RenderTexture2D &dofTexture, int screenWidth, int screenHeight,
               GameState &GameState) {
   float accumulator = 0.0;
   int substeps = 8;
@@ -34,11 +33,9 @@ void GameLoop(vec3 lightDir, RenderTexture2D &shadowMap,
       // Update game state
       GameState.mouse_proj = project_mouse(1.0, GameState.camera);
       handle_collisions(GameState, substeps, GameState.pens);
-      GameState.player->tether.update(GameState.camera, GameState,
-                                      GameState.player->pos);
+      GameState.player->tether.update(GameState.camera, GameState, GameState.player->pos);
       GameState.player->update();
-      GameState.player->rope.update(GameState.player->pos,
-                                    GameState.player->tether.pos, dt);
+      GameState.player->rope.update(GameState.player->pos, GameState.player->tether.pos, dt);
       GameState.addAnimalTimer += dt;
       if (GameState.addAnimalTimer > GameState.addAnimalInterval) {
         GameState.addAnimalTimer = 0.0;
@@ -54,8 +51,8 @@ void GameLoop(vec3 lightDir, RenderTexture2D &shadowMap,
       RenderUtils::update_camera(GameState);
       // Update shaders
       Vector3 cameraPos = GameState.camera.position;
-      SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW],
-                     &cameraPos, SHADER_UNIFORM_VEC3);
+      SetShaderValue(shadowShader, shadowShader.locs[SHADER_LOC_VECTOR_VIEW], &cameraPos,
+                     SHADER_UNIFORM_VEC3);
 
       update_lightDir(lightDir, dt);
       update_itemActive(GameState.itemActive);
@@ -67,15 +64,13 @@ void GameLoop(vec3 lightDir, RenderTexture2D &shadowMap,
     int lightDirLoc = GetShaderLocation(shadowShader, "lightDir");
     SetShaderValue(shadowShader, lightDirLoc, &lightDir, SHADER_UNIFORM_VEC3);
 
-    RenderUtils::RenderShadowMap(shadowShader, shadowMap, GameState.lightCam,
-                                 GameState);
+    RenderUtils::RenderShadowMap(shadowShader, shadowMap, GameState.lightCam, GameState);
 
     // Render scene
-    RenderUtils::RenderSceneToTexture(dofTexture, GameState.camera,
-                                      shadowShader, shadowMap, GameState);
+    RenderUtils::RenderSceneToTexture(dofTexture, GameState.camera, shadowShader, shadowMap,
+                                      GameState);
 
-    RenderUtils::HandleWindowResize(GameState, screenWidth, screenHeight,
-                                    dofTexture, dofShader);
+    RenderUtils::HandleWindowResize(GameState, screenWidth, screenHeight, dofTexture, dofShader);
 
     // Render final image
     BeginDrawing();
@@ -96,21 +91,19 @@ int main(void) {
   try {
     RenderUtils::InitializeWindow(screenWidth, screenHeight);
 
-    Font customFont = LoadFont("resources/fonts/Roboto-Regular.ttf");  // Load
-    GuiSetFont(customFont);  // Set the custom font
+    Font customFont = LoadFont("resources/fonts/Roboto-Regular.ttf"); // Load
+    GuiSetFont(customFont);                                           // Set the custom font
 
-    GuiSetStyle(DEFAULT, TEXT_SIZE, 26);  // Adjust size as needed
+    GuiSetStyle(DEFAULT, TEXT_SIZE, 26); // Adjust size as needed
 
     vec3 lightDir = Vector3Normalize((Vector3){0.35f, -1.0f, -0.35f});
-    RenderTexture2D dofTexture =
-        RenderUtils::SetupDofTexture(screenWidth, screenHeight);
-    rl::Shader dofShader =
-        RenderUtils::SetupDofShader(screenWidth, screenHeight);
+    RenderTexture2D dofTexture = RenderUtils::SetupDofTexture(screenWidth, screenHeight);
+    rl::Shader dofShader = RenderUtils::SetupDofShader(screenWidth, screenHeight);
     rl::Shader shadowShader = RenderUtils::SetupShadowShader(lightDir);
     GameState GameState(shadowShader, screenWidth, screenHeight);
 
-    RenderTexture2D shadowMap = RenderUtils::LoadShadowmapRenderTexture(
-        SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
+    RenderTexture2D shadowMap =
+        RenderUtils::LoadShadowmapRenderTexture(SHADOWMAP_RESOLUTION, SHADOWMAP_RESOLUTION);
     // Camera3D lightCam = RenderUtils::SetupLightCamera();
 
     SetTargetFPS(165);
@@ -118,11 +111,10 @@ int main(void) {
 
     SetExitKey(KEY_NULL);
 
-    GameLoop(lightDir, shadowMap, shadowShader, dofShader, dofTexture,
-             screenWidth, screenHeight, GameState);
+    GameLoop(lightDir, shadowMap, shadowShader, dofShader, dofTexture, screenWidth, screenHeight,
+             GameState);
 
-    RenderUtils::UnloadResources(shadowShader, shadowMap, GameState, dofShader,
-                                 dofTexture);
+    RenderUtils::UnloadResources(shadowShader, shadowMap, GameState, dofShader, dofTexture);
     UnloadFont(customFont);
   } catch (const std::exception &e) {
     TraceLog(LOG_ERROR, "An error occurred: %s", e.what());
