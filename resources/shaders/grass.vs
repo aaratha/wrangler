@@ -1,26 +1,39 @@
 #version 330
-
 // Input vertex attributes
-in vec3 vertexPosition;      // Vertex position relative to origin
-in vec2 vertexTexCoord;      // Texture coordinate of vertex
-in mat4 instanceTransform;   // Model transformation matrix for each instance
-
+in vec3 vertexPosition;
+in vec2 vertexTexCoord;
+in mat4 instanceTransform;
 // Input uniform values
-uniform mat4 mvp;            // Model-View-Projection matrix
-
-// Output vertex attributes (to fragment shader)
+uniform mat4 mvp;
+uniform vec4 windParams;  // x: strength, y: frequency, z: speed, w: time
+// Output vertex attributes
 out vec2 fragTexCoord;
 out vec3 fragPosition;
-
 void main()
 {
-    // Pass texture coordinate to fragment shader
     fragTexCoord = vertexTexCoord;
+    vec3 position = vertexPosition;
 
-    // Calculate transformed position in world space
-    vec4 worldPosition = instanceTransform * vec4(vertexPosition, 1.0);
+    float windStrength = windParams.x;
+    float windFrequency = windParams.y;
+    float windSpeed = windParams.z;
+    float time = windParams.w;
+
+    // Use instance position for base wind calculation
+    vec3 basePos = vec3(instanceTransform[3][0], instanceTransform[3][1], instanceTransform[3][2]);
+    float baseWindAngle = windStrength *
+        sin(windFrequency * basePos.x + windSpeed * time) *
+        cos(windFrequency * basePos.z + windSpeed * time * 0.7);
+
+    // Scale displacement by height but use base wind angle
+    float heightFactor = position.y;
+    float windDisplacement = baseWindAngle * heightFactor;
+
+    // Apply displacement while maintaining blade shape
+    position.x += windDisplacement;
+    position.z += windDisplacement * 0.5;
+
+    vec4 worldPosition = instanceTransform * vec4(position, 1.0);
     fragPosition = worldPosition.xyz;
-
-    // Calculate final vertex position in screen space
     gl_Position = mvp * worldPosition;
 }

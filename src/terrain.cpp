@@ -9,8 +9,11 @@ Blade::Blade(Shader shadowShader, vec3 pos) : pos(pos) {
 }
 
 Terrain::Terrain(Shader shadowShader, int bladeCount)
-    : blade(shadowShader, make_vec3(0.0f)), bladeCount(bladeCount) {
-  Shader instancedShader = LoadShader("resources/shaders/grass.vs", "resources/shaders/grass.fs");
+    : blade(shadowShader, make_vec3(0.0f)),
+      bladeCount(bladeCount),
+      windTime(0.0f) {
+  Shader instancedShader =
+      LoadShader("resources/shaders/grass.vs", "resources/shaders/grass.fs");
   instancedShader.locs[SHADER_LOC_MATRIX_MODEL] =
       GetShaderLocationAttrib(instancedShader, "instanceTransform");
 
@@ -21,21 +24,23 @@ Terrain::Terrain(Shader shadowShader, int bladeCount)
   blade.model.materials[0] = matInstances;
 
   // Allocate memory for transformations
-  transforms = (Matrix *)RL_CALLOC(bladeCount, sizeof(Matrix));
+  transforms = (Matrix*)RL_CALLOC(bladeCount, sizeof(Matrix));
 
   // Add scale factor for blade size
-  float bladeSizeMin = 1.3f; // Minimum blade size (was implicitly 1.0)
-  float bladeSizeMax = 1.7f; // Maximum blade size
+  float bladeSizeMin = 1.3f;  // Minimum blade size (was implicitly 1.0)
+  float bladeSizeMax = 1.7f;  // Maximum blade size
   float bladeVertical = 1.5f;
-  int area = 10;
+  int area = 15;
 
   for (int i = 0; i < bladeCount; i++) {
-    Vector3 position = (Vector3){GetRandomFloat(-area, area), 0.0f, GetRandomFloat(-area, area)};
+    Vector3 position = (Vector3){GetRandomFloat(-area, area), 0.0f,
+                                 GetRandomFloat(-area, area)};
     Matrix translation = MatrixTranslate(position.x, position.y, position.z);
 
     // Add random scaling to each blade
     float randomSize = GetRandomFloat(bladeSizeMin, bladeSizeMax);
-    Matrix scale = MatrixScale(randomSize, randomSize * bladeVertical, randomSize);
+    Matrix scale =
+        MatrixScale(randomSize, randomSize * bladeVertical, randomSize);
 
     Vector3 axis = Vector3Normalize((Vector3){1.0, 0.0, 0.0});
     float angle = GetRandomFloat(150, 180) * DEG2RAD;
@@ -44,7 +49,25 @@ Terrain::Terrain(Shader shadowShader, int bladeCount)
     // Combine all transformations: Scale -> Rotate -> Translate
     Matrix scaleRotate = MatrixMultiply(rotation, scale);
     transforms[i] = MatrixMultiply(scaleRotate, translation);
+
+    blade.model.materials[0].shader.locs[SHADER_LOC_VECTOR_VIEW] =
+        GetShaderLocation(blade.model.materials[0].shader, "windParams");
   }
+}
+
+void Terrain::update(float dt) {
+  windTime += dt;
+
+  // Update wind parameters in shader
+  float windStrength = 0.2f;    // Maximum rotation angle in radians
+  float windFrequency = 10.0f;  // How many waves across the field
+  float windSpeed = 2.5f;       // How fast the wind moves
+
+  Vector4 windParams = {windStrength, windFrequency, windSpeed, windTime};
+
+  SetShaderValue(blade.model.materials[0].shader,
+                 blade.model.materials[0].shader.locs[SHADER_LOC_VECTOR_VIEW],
+                 &windParams, SHADER_UNIFORM_VEC4);
 }
 
 void Terrain::draw() {
@@ -53,5 +76,6 @@ void Terrain::draw() {
               (Vector3){80.0f, 1.0f, 80.0f}, (Color){51, 102, 51, 255});
 
   // Then try instancing
-  DrawMeshInstanced(blade.model.meshes[0], blade.model.materials[0], transforms, bladeCount);
+  DrawMeshInstanced(blade.model.meshes[0], blade.model.materials[0], transforms,
+                    bladeCount);
 }

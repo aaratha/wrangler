@@ -4,23 +4,20 @@
 #include "utils.hpp"
 
 class Blade {
-public:
-  vec3 pos;
-  Model model;
-
+ public:
   Blade(Shader shadowShader, vec3 pos);
-  void draw();
+  Model model;
+  vec3 pos;
 };
 
 class Terrain {
-public:
-  vec3 pos;
-  Model planeModel;
-  Blade blade;
-  int bladeCount;
-  Matrix *transforms;
-  std::vector<Blade> grass;
-  Shader instanceShader;
+ public:
   Terrain(Shader shadowShader, int bladeCount);
   void draw();
+  void update(float deltaTime);  // New update method
+  Blade blade;
+  int bladeCount;
+  Model planeModel;
+  Matrix* transforms;
+  float windTime;  // New wind time accumulator
 };
