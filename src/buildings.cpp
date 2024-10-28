@@ -1,11 +1,11 @@
 #include "buildings.hpp"
 
 // Function to compute AABB for a pen
-AABB compute_aabb(const Pen &pen) {
+AABB compute_aabb(const Pen& pen) {
   vec3 min = pen.fixed_points[0];
   vec3 max = pen.fixed_points[0];
 
-  for (const auto &point : pen.fixed_points) {
+  for (const auto& point : pen.fixed_points) {
     min.x = std::min(min.x, point.x);
     min.z = std::min(min.z, point.z);
     max.x = std::max(max.x, point.x);
@@ -13,8 +13,8 @@ AABB compute_aabb(const Pen &pen) {
   }
 
   // Include the dynamic rope points in the AABB calculation
-  for (const auto &rope_segment : pen.rope_points) {
-    for (const auto &point : rope_segment) {
+  for (const auto& rope_segment : pen.rope_points) {
+    for (const auto& point : rope_segment) {
       min.x = std::min(min.x, point.x);
       min.z = std::min(min.z, point.z);
       max.x = std::max(max.x, point.x);
@@ -26,7 +26,7 @@ AABB compute_aabb(const Pen &pen) {
 }
 
 // Point-in-polygon test using the ray-casting algorithm
-bool is_point_in_polygon(const vec3 &point, const Pen &pen) {
+bool is_point_in_polygon(const vec3& point, const Pen& pen) {
   int intersections = 0;
   for (size_t i = 0; i < pen.fixed_points.size(); i++) {
     vec3 start = pen.fixed_points[i];
@@ -49,15 +49,15 @@ bool is_point_in_polygon(const vec3 &point, const Pen &pen) {
 }
 
 void detect_animals_in_pens(
-    std::vector<std::unique_ptr<Pen>> &pens,
-    const std::vector<std::unique_ptr<Animal>> &animals) {
+    std::vector<std::unique_ptr<Pen>>& pens,
+    const std::vector<std::unique_ptr<Animal>>& animals) {
   // Step 1: Assign each animal to the relevant pen
-  for (auto &pen : pens) {
+  for (auto& pen : pens) {
     pen->contained_animals.clear();  // Reset contained animals
     // Compute the AABB for quick rejection
     AABB pen_aabb = compute_aabb(*pen);
     // Step 2: For each animal, check if it's inside the pen
-    for (const auto &animal : animals) {
+    for (const auto& animal : animals) {
       vec3 animal_pos = animal->pos;
       // Quick rejection via AABB test
       if (animal_pos.x < pen_aabb.min.x || animal_pos.x > pen_aabb.max.x ||
@@ -75,7 +75,7 @@ void detect_animals_in_pens(
       SpeciesType first_species = pen->contained_animals[0]->species.type;
       bool all_same_species = true;
 
-      for (const auto *animal : pen->contained_animals) {
+      for (const auto* animal : pen->contained_animals) {
         if (animal->species.type != first_species) {
           all_same_species = false;
           break;
@@ -131,14 +131,14 @@ void Pen::spawnCoin() {
   contained_coins.push_back(new_coin);  // Add the new coin to the vector
 }
 
-void Pen::update(GameState &GameState, float dt) {
+void Pen::update(GameState& GameState, float dt) {
   for (size_t i = 0; i < fixed_points.size(); ++i) {
     size_t next_i = (i + 1) % fixed_points.size();
     vec3 start = fixed_points[i];
     vec3 end = fixed_points[next_i];
 
-    auto &segment_points = rope_points[i];
-    auto &segment_velocities = rope_velocities[i];
+    auto& segment_points = rope_points[i];
+    auto& segment_velocities = rope_velocities[i];
 
     segment_points[0] = start;
     segment_points[segment_points.size() - 1] = end;
@@ -176,7 +176,7 @@ void Pen::update(GameState &GameState, float dt) {
 
     // Check for collisions between player and coins
     for (auto it = contained_coins.begin(); it != contained_coins.end();) {
-      Coin &coin = *it;
+      Coin& coin = *it;
       if (checkCoinCollisions(GameState, coin)) {
         // Remove the coin from the contained_coins vector and increment the
         // GameState.coins count
@@ -189,7 +189,7 @@ void Pen::update(GameState &GameState, float dt) {
   }
 }
 
-bool Pen::checkCoinCollisions(GameState &GameState, Coin &coin) {
+bool Pen::checkCoinCollisions(GameState& GameState, Coin& coin) {
   const float playerRadius = 1.5f;
   const float tetherRadius = 0.5f;
 
@@ -222,11 +222,11 @@ Fence::Fence() {
   joinDist = 1.0;
 }
 
-void Fence::place(vec2 point, std::vector<std::unique_ptr<Pen>> &pens) {
+void Fence::place(vec2 point, std::vector<std::unique_ptr<Pen>>& pens) {
   if (points.size() > 2 && Vector2Distance(point, points[0]) < joinDist) {
     points.push_back(points[0]);
     std::vector<vec3> fixed_points;
-    for (auto &point : points) {
+    for (auto& point : points) {
       fixed_points.push_back(vec2to3(point, 1.0));
     }
     pens.push_back(std::unique_ptr<Pen>(new Pen(fixed_points)));
@@ -242,21 +242,21 @@ void Fence::undo() {
   }
 }
 
-void Fence::draw(GameState &GameState) {
+void Fence::draw(GameState& GameState) {
   if (points.size() > 0) {
     if (Vector2Distance(points[0], GameState.mouse_proj) > joinDist) {
       DrawCylinderEx(vec2to3(points.back(), 1.0),
-                     vec2to3(GameState.mouse_proj, 1.0), 0.1f, 0.1f, 10, WHITE);
+                     vec2to3(GameState.mouse_proj, 1.0), 0.1f, 0.1f, 10, BLUE);
     } else {
       DrawCylinderEx(vec2to3(points.back(), 1.0), vec2to3(points[0], 1.0), 0.1f,
-                     0.1f, 10, WHITE);
+                     0.1f, 10, BLUE);
     }
   }
   if (points.size() < 2)
     return;  // Avoid drawing if there are not enough points
   for (size_t i = 0; i < points.size() - 1; ++i) {
     DrawCylinderEx(vec2to3(points[i], 1.0), vec2to3(points[i + 1], 1.0), 0.1f,
-                   0.1f, 10, WHITE);
+                   0.1f, 10, BLUE);
     DrawCylinderEx(vec2to3(points[i], 0.0), vec2to3(points[i], 1.0), 0.1f, 0.1f,
                    8, GRAY);
     if (i == points.size() - 2) {
@@ -268,19 +268,19 @@ void Fence::draw(GameState &GameState) {
                WHITE);
 }
 
-void Pen::draw(GameState &GameState) {
-  for (const auto &segment : rope_points) {
+void Pen::draw(GameState& GameState) {
+  for (const auto& segment : rope_points) {
     for (size_t i = 0; i < segment.size() - 1; i++) {
       Vector3 start = segment[i];
       Vector3 end = segment[i + 1];
       DrawCylinderEx(start, end, thickness, thickness, sides, species.color);
     }
   }
-  for (const auto &post : fixed_points) {
+  for (const auto& post : fixed_points) {
     DrawCylinderEx(vec3{post.x, 0.0, post.z}, vec3{post.x, 1.0, post.z}, 0.1,
                    0.1, 8, GRAY);
   }
-  for (auto &coin : contained_coins) {
+  for (auto& coin : contained_coins) {
     if (RenderUtils::is_in_camera_view(coin.pos, coin.radius, GameState.camera,
                                        GameState.screenWidth,
                                        GameState.screenHeight))
@@ -288,7 +288,7 @@ void Pen::draw(GameState &GameState) {
   }
 }
 
-void handle_building(GameState &gameState, Camera3D camera) {
+void handle_building(GameState& gameState, Camera3D camera) {
   Vector2 mousePos = GetMousePosition();
   Ray ray = GetMouseRay(mousePos, camera);
 
