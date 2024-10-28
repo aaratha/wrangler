@@ -38,15 +38,18 @@ void main() {
   // field of view
   if (angle < (fovy) * 0.01) {
     // Calculate wind oscillation based on blade position
-    vec3 basePos = vec3(instanceTransform[3][0], instanceTransform[3][1],
-                        instanceTransform[3][2]);
-    float oscillation = sin(windFrequency * basePos.x + windSpeed * time) *
-                        cos(windFrequency * basePos.z + windSpeed * time * 0.7);
-    float windDisplacement = oscillation * windStrength * position.y;
+    if (angle < fovy * 0.005) {
+      vec3 basePos = vec3(instanceTransform[3][0], instanceTransform[3][1],
+                          instanceTransform[3][2]);
+      float oscillation =
+          sin(windFrequency * basePos.x + windSpeed * time) *
+          cos(windFrequency * basePos.z + windSpeed * time * 0.7);
+      float windDisplacement = oscillation * windStrength * position.y;
 
-    // Apply wind displacement directly to the vertex position
-    position.x += windDisplacement;
-    position.z += windDisplacement * 0.5;
+      // Apply wind displacement directly to the vertex position
+      position.x += windDisplacement;
+      position.z += windDisplacement * 0.5;
+    }
 
     // Calculate the world position of the blade
     vec4 worldPosition = instanceTransform * vec4(position, 1.0);
