@@ -1,6 +1,7 @@
 #pragma once
 
 #include "raylib-cpp.hpp"
+#include "render_utils.hpp"
 #include "utils.hpp"
 
 class Blade {
@@ -13,7 +14,7 @@ class Blade {
 class Terrain {
  public:
   Terrain(Shader shadowShader, int bladeCount);
-  void draw();
+  void draw(GameState& GameState);
   void update(float deltaTime);  // New update method
   Blade blade;
   int bladeCount;

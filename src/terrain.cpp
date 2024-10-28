@@ -27,8 +27,8 @@ Terrain::Terrain(Shader shadowShader, int bladeCount)
   transforms = (Matrix*)RL_CALLOC(bladeCount, sizeof(Matrix));
 
   // Add scale factor for blade size
-  float bladeSizeMin = 1.3f;  // Minimum blade size (was implicitly 1.0)
-  float bladeSizeMax = 1.7f;  // Maximum blade size
+  float bladeSizeMin = 1.0f;  // Minimum blade size (was implicitly 1.0)
+  float bladeSizeMax = 1.3f;  // Maximum blade size
   float bladeVertical = 1.5f;
   int area = 15;
 
@@ -59,9 +59,9 @@ void Terrain::update(float dt) {
   windTime += dt;
 
   // Update wind parameters in shader
-  float windStrength = 0.2f;    // Maximum rotation angle in radians
+  float windStrength = 0.3f;    // Maximum rotation angle in radians
   float windFrequency = 10.0f;  // How many waves across the field
-  float windSpeed = 2.5f;       // How fast the wind moves
+  float windSpeed = 4.5f;       // How fast the wind moves
 
   Vector4 windParams = {windStrength, windFrequency, windSpeed, windTime};
 
@@ -70,12 +70,27 @@ void Terrain::update(float dt) {
                  &windParams, SHADER_UNIFORM_VEC4);
 }
 
-void Terrain::draw() {
-  // Draw the terrain (plane)
-  DrawModelEx(planeModel, (Vector3){0.0f, -0.5f, 0.0f}, Vector3Zero(), 0.0f,
-              (Vector3){80.0f, 1.0f, 80.0f}, (Color){51, 102, 51, 255});
+void Terrain::draw(GameState& GameState) {
+  std::vector<Matrix> visibleTransforms;
+  visibleTransforms.reserve(bladeCount);
 
-  // Then try instancing
-  DrawMeshInstanced(blade.model.meshes[0], blade.model.materials[0], transforms,
-                    bladeCount);
+  float bladeRadius = 0.5f;  // Approximate radius for each grass blade
+
+  DrawModelEx(planeModel, (Vector3){0.0f, -0.5f, 0.0f}, Vector3Zero(), 0.0f,
+              (Vector3){80.0f, 1.0f, 80.0f}, (Color){43, 31, 24, 255});
+
+  for (int i = 0; i < bladeCount; i++) {
+    Vector3 bladePos = {transforms[i].m12, transforms[i].m13,
+                        transforms[i].m14};
+
+    if (RenderUtils::is_in_camera_view(bladePos, bladeRadius, GameState.camera,
+                                       GameState.screenWidth,
+                                       GameState.screenHeight)) {
+      visibleTransforms.push_back(transforms[i]);
+    }
+  }
+
+  // Draw only the visible instances
+  DrawMeshInstanced(blade.model.meshes[0], blade.model.materials[0],
+                    visibleTransforms.data(), visibleTransforms.size());
 }
