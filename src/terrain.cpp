@@ -8,10 +8,11 @@ Blade::Blade(Shader shadowShader, vec3 pos) : pos(pos) {
   // model.materials[0].shader = shadowShader;
 }
 
-Terrain::Terrain(Shader shadowShader, int bladeCount)
+Terrain::Terrain(Shader shadowShader)
     : blade(shadowShader, make_vec3(0.0f)),
       bladeCount(bladeCount),
       windTime(0.0f) {
+  bladeCount = 20000;
   Shader instancedShader =
       LoadShader("resources/shaders/grass.vs", "resources/shaders/grass.fs");
   instancedShader.locs[SHADER_LOC_MATRIX_MODEL] =
@@ -30,7 +31,7 @@ Terrain::Terrain(Shader shadowShader, int bladeCount)
   float bladeSizeMin = 1.3f;  // Minimum blade size (was implicitly 1.0)
   float bladeSizeMax = 1.5f;  // Maximum blade size
   float bladeVertical = 1.5f;
-  int area = 40;
+  int area = 20;
 
   for (int i = 0; i < bladeCount; i++) {
     Vector3 position = (Vector3){GetRandomFloat(-area, area), 0.0f,
@@ -87,7 +88,7 @@ void Terrain::update(GameState& GameState, float dt) {
 void Terrain::draw() {
   // Draw the terrain (plane)
   DrawModelEx(planeModel, (Vector3){0.0f, -0.5f, 0.0f}, Vector3Zero(), 0.0f,
-              (Vector3){80.0f, 1.0f, 80.0f}, (Color){43, 31, 24, 255});
+              (Vector3){80.0f, 1.0f, 80.0f}, (Color){53, 128, 42, 255});
 
   // Then try instancing
   DrawMeshInstanced(blade.model.meshes[0], blade.model.materials[0], transforms,

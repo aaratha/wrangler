@@ -13,7 +13,7 @@ class Blade {
 
 class Terrain {
  public:
-  Terrain(Shader shadowShader, int bladeCount);
+  Terrain(Shader shadowShader);
   void draw();
   void update(GameState& GameState, float dt);  // New update method
   Blade blade;

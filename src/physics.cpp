@@ -1,7 +1,7 @@
 #include "physics.hpp"
 
 // Helper function to compute the grid cell based on position
-GridKey get_grid_key(const vec3 &pos, float grid_size) {
+GridKey get_grid_key(const vec3& pos, float grid_size) {
   return {
       static_cast<int>(pos.x / grid_size),
       static_cast<int>(pos.z / grid_size)  // 2D grid, ignoring z-axis
@@ -9,13 +9,15 @@ GridKey get_grid_key(const vec3 &pos, float grid_size) {
 }
 
 // Helper function to add objects to grid cells
-void add_to_grid(Grid &grid, Animal *animal, float grid_size) {
+void add_to_grid(Grid& grid, Animal* animal, float grid_size) {
   GridKey key = get_grid_key(animal->pos, grid_size);
   grid[key].push_back(animal);
 }
 
-void check_grid_collisions(const Grid &grid, const GridKey &key,
-                           const float animalRadius, GameState &GameState) {
+void check_grid_collisions(const Grid& grid,
+                           const GridKey& key,
+                           const float animalRadius,
+                           GameState& GameState) {
   static const int neighbor_offsets[3] = {
       -1, 0, 1};  // To check neighboring cells in both x and z axes
 
@@ -25,10 +27,10 @@ void check_grid_collisions(const Grid &grid, const GridKey &key,
 
       auto it = grid.find(neighbor_key);
       if (it != grid.end()) {
-        const std::vector<Animal *> &nearbyAnimals = it->second;
+        const std::vector<Animal*>& nearbyAnimals = it->second;
 
         // Player vs Animals in nearby grid cells
-        for (Animal *animal : nearbyAnimals) {
+        for (Animal* animal : nearbyAnimals) {
           if (CheckCollisionSpheres(GameState.player->pos,
                                     GameState.player->radius, animal->pos,
                                     animalRadius)) {
@@ -71,8 +73,9 @@ void check_grid_collisions(const Grid &grid, const GridKey &key,
 }
 
 // Check collisions within a grid cell and its neighbors
-void handle_collisions(GameState &GameState, int &substeps,
-                       std::vector<std::unique_ptr<Pen>> &pens) {
+void handle_collisions(GameState& GameState,
+                       int& substeps,
+                       std::vector<std::unique_ptr<Pen>>& pens) {
   const float playerRadius = 1.0f;
   const float ropeSegmentRadius = 0.7f;  // From the Rope constructor
 
@@ -80,19 +83,19 @@ void handle_collisions(GameState &GameState, int &substeps,
   for (int i = 0; i < substeps; i++) {
     Grid grid;
 
-    for (auto &animal : GameState.animals) {
+    for (auto& animal : GameState.animals) {
       add_to_grid(grid, animal.get(), GRID_SIZE);
     }
 
     // Step 2: Perform collision detection using grid
-    for (auto &animal : GameState.animals) {
+    for (auto& animal : GameState.animals) {
       GridKey key = get_grid_key(animal->pos, GRID_SIZE);
       check_grid_collisions(grid, key, animal->species.radius, GameState);
     }
 
     // rope and animals
     if (!IsKeyDown(KEY_LEFT_SHIFT)) {
-      for (auto &animal : GameState.animals) {
+      for (auto& animal : GameState.animals) {
         for (int i = 0; i < GameState.player->rope.num_points - 1; i++) {
           if (CheckCollisionPointLine(
                   animal->pos, GameState.player->rope.points[i],
@@ -121,8 +124,8 @@ void handle_collisions(GameState &GameState, int &substeps,
     }
 
     // pens and animals
-    for (auto &animal : GameState.animals) {
-      for (auto &pen : GameState.pens) {
+    for (auto& animal : GameState.animals) {
+      for (auto& pen : GameState.pens) {
         for (size_t i = 0; i < pen->rope_points.size(); ++i) {
           for (size_t j = 0; j < pen->rope_points[i].size() - 1; ++j) {
             vec3 start = pen->rope_points[i][j];
@@ -131,7 +134,7 @@ void handle_collisions(GameState &GameState, int &substeps,
             // if (CheckCollisionPointLine(animal->pos, start, end,
             // ropeSegmentRadius)) {
             if (CheckCollisionSpheres(animal->pos, animal->species.radius,
-                                      start, 0.1)) {
+                                      start, 0.05)) {
               vec3 closestPoint =
                   GetClosestPointOnLineFromPoint(animal->pos, start, end);
               vec3 collisionNormal =
@@ -172,7 +175,7 @@ void handle_collisions(GameState &GameState, int &substeps,
     }
 
     // Player tether vs Animals
-    for (auto &animal : GameState.animals) {
+    for (auto& animal : GameState.animals) {
       if (CheckCollisionSpheres(GameState.player->tether.pos,
                                 GameState.player->tether.radius, animal->pos,
                                 animal->species.radius)) {

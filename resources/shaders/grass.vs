@@ -38,7 +38,7 @@ void main() {
   // field of view
   if (angle < (fovy) * 0.01) {
     // Calculate wind oscillation based on blade position
-    if (angle < fovy * 0.005) {
+    if (angle < fovy * 0.008) {
       vec3 basePos = vec3(instanceTransform[3][0], instanceTransform[3][1],
                           instanceTransform[3][2]);
       float oscillation =
