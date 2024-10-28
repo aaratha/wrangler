@@ -59,9 +59,9 @@ void Terrain::update(GameState& GameState, float dt) {
   windTime += dt;
 
   // Update wind parameters in shader
-  float windStrength = 0.3f;    // Maximum rotation angle in radians
-  float windFrequency = 10.0f;  // How many waves across the field
-  float windSpeed = 4.5f;       // How fast the wind moves
+  float windStrength = 0.3f;   // Maximum rotation angle in radians
+  float windFrequency = 0.2f;  // How many waves across the field
+  float windSpeed = 3.5f;      // How fast the wind moves
 
   Vector4 windParams = {windStrength, windFrequency, windSpeed, windTime};
 
