@@ -125,7 +125,7 @@ bool is_in_camera_view(const Vector3& position,
 }
 
 void draw_scene(GameState& GameState) {
-  GameState.terrain->draw(GameState);
+  GameState.terrain->draw();
   GameState.player->draw();
   GameState.player->tether.draw();
   GameState.player->rope.draw();

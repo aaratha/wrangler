@@ -27,10 +27,10 @@ Terrain::Terrain(Shader shadowShader, int bladeCount)
   transforms = (Matrix*)RL_CALLOC(bladeCount, sizeof(Matrix));
 
   // Add scale factor for blade size
-  float bladeSizeMin = 1.0f;  // Minimum blade size (was implicitly 1.0)
-  float bladeSizeMax = 1.3f;  // Maximum blade size
+  float bladeSizeMin = 1.3f;  // Minimum blade size (was implicitly 1.0)
+  float bladeSizeMax = 1.5f;  // Maximum blade size
   float bladeVertical = 1.5f;
-  int area = 15;
+  int area = 40;
 
   for (int i = 0; i < bladeCount; i++) {
     Vector3 position = (Vector3){GetRandomFloat(-area, area), 0.0f,
@@ -55,7 +55,7 @@ Terrain::Terrain(Shader shadowShader, int bladeCount)
   }
 }
 
-void Terrain::update(float dt) {
+void Terrain::update(GameState& GameState, float dt) {
   windTime += dt;
 
   // Update wind parameters in shader
@@ -65,32 +65,31 @@ void Terrain::update(float dt) {
 
   Vector4 windParams = {windStrength, windFrequency, windSpeed, windTime};
 
-  SetShaderValue(blade.model.materials[0].shader,
-                 blade.model.materials[0].shader.locs[SHADER_LOC_VECTOR_VIEW],
-                 &windParams, SHADER_UNIFORM_VEC4);
+  Shader shader = blade.model.materials[0].shader;
+
+  SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &windParams,
+                 SHADER_UNIFORM_VEC4);
+
+  Vector3 cameraPos = GameState.camera.position;  // Or however you access it
+  Vector3 cameraDir =
+      Vector3Normalize(Vector3Subtract(GameState.camera.target, cameraPos));
+  float fovy = GameState.camera.fovy;  // Assuming you have this value
+
+  // Set uniforms
+  SetShaderValue(shader, GetShaderLocation(shader, "cameraPos"), &cameraPos,
+                 SHADER_UNIFORM_VEC3);
+  SetShaderValue(shader, GetShaderLocation(shader, "cameraDir"), &cameraDir,
+                 SHADER_UNIFORM_VEC3);
+  SetShaderValue(shader, GetShaderLocation(shader, "fovy"), &fovy,
+                 SHADER_UNIFORM_FLOAT);
 }
 
-void Terrain::draw(GameState& GameState) {
-  std::vector<Matrix> visibleTransforms;
-  visibleTransforms.reserve(bladeCount);
-
-  float bladeRadius = 0.5f;  // Approximate radius for each grass blade
-
+void Terrain::draw() {
+  // Draw the terrain (plane)
   DrawModelEx(planeModel, (Vector3){0.0f, -0.5f, 0.0f}, Vector3Zero(), 0.0f,
               (Vector3){80.0f, 1.0f, 80.0f}, (Color){43, 31, 24, 255});
 
-  for (int i = 0; i < bladeCount; i++) {
-    Vector3 bladePos = {transforms[i].m12, transforms[i].m13,
-                        transforms[i].m14};
-
-    if (RenderUtils::is_in_camera_view(bladePos, bladeRadius, GameState.camera,
-                                       GameState.screenWidth,
-                                       GameState.screenHeight)) {
-      visibleTransforms.push_back(transforms[i]);
-    }
-  }
-
-  // Draw only the visible instances
-  DrawMeshInstanced(blade.model.meshes[0], blade.model.materials[0],
-                    visibleTransforms.data(), visibleTransforms.size());
+  // Then try instancing
+  DrawMeshInstanced(blade.model.meshes[0], blade.model.materials[0], transforms,
+                    bladeCount);
 }

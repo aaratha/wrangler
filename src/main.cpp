@@ -54,7 +54,7 @@ void GameLoop(vec3 lightDir,
       for (auto& pen : GameState.pens) {
         pen->update(GameState, dt);
       }
-      GameState.terrain->update(dt);
+      GameState.terrain->update(GameState, dt);
       detect_animals_in_pens(GameState.pens, GameState.animals);
       RenderUtils::update_camera(GameState);
       // Update shaders

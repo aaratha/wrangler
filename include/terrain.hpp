@@ -14,8 +14,8 @@ class Blade {
 class Terrain {
  public:
   Terrain(Shader shadowShader, int bladeCount);
-  void draw(GameState& GameState);
-  void update(float deltaTime);  // New update method
+  void draw();
+  void update(GameState& GameState, float dt);  // New update method
   Blade blade;
   int bladeCount;
   Model planeModel;
