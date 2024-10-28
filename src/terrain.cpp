@@ -1,4 +1,5 @@
 #include "terrain.hpp"
+#include <scoped_allocator>
 
 Blade::Blade(Shader shadowShader, vec3 pos) : pos(pos) {
   model = LoadModel("resources/models/grass_blade.glb");
@@ -12,7 +13,7 @@ Terrain::Terrain(Shader shadowShader)
     : blade(shadowShader, make_vec3(0.0f)),
       bladeCount(bladeCount),
       windTime(0.0f) {
-  bladeCount = 20000;
+  bladeCount = 60000;
   Shader instancedShader =
       LoadShader("resources/shaders/grass.vs", "resources/shaders/grass.fs");
   instancedShader.locs[SHADER_LOC_MATRIX_MODEL] =
@@ -31,7 +32,7 @@ Terrain::Terrain(Shader shadowShader)
   float bladeSizeMin = 1.3f;  // Minimum blade size (was implicitly 1.0)
   float bladeSizeMax = 1.5f;  // Maximum blade size
   float bladeVertical = 1.5f;
-  int area = 20;
+  int area = 40;
 
   for (int i = 0; i < bladeCount; i++) {
     Vector3 position = (Vector3){GetRandomFloat(-area, area), 0.0f,
@@ -74,7 +75,9 @@ void Terrain::update(GameState& GameState, float dt) {
   Vector3 cameraPos = GameState.camera.position;  // Or however you access it
   Vector3 cameraDir =
       Vector3Normalize(Vector3Subtract(GameState.camera.target, cameraPos));
-  float fovy = GameState.camera.fovy;  // Assuming you have this value
+  float fovy = GameState.camera.fovy;           // Assuming you have this value
+  float screenWidth = GameState.screenWidth;    // Assuming you have this value
+  float screenHeight = GameState.screenHeight;  // Assuming you have this value
 
   // Set uniforms
   SetShaderValue(shader, GetShaderLocation(shader, "cameraPos"), &cameraPos,
@@ -83,6 +86,10 @@ void Terrain::update(GameState& GameState, float dt) {
                  SHADER_UNIFORM_VEC3);
   SetShaderValue(shader, GetShaderLocation(shader, "fovy"), &fovy,
                  SHADER_UNIFORM_FLOAT);
+  SetShaderValue(shader, GetShaderLocation(shader, "screenWidth"), &screenWidth,
+                 SHADER_UNIFORM_FLOAT);
+  SetShaderValue(shader, GetShaderLocation(shader, "screenHeight"),
+                 &screenHeight, SHADER_UNIFORM_FLOAT);
 }
 
 void Terrain::draw() {

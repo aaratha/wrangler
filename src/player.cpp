@@ -8,7 +8,8 @@ Tether::Tether(Shader shader) : shader(shader) {
   model.materials[0].shader = shader;
 }
 
-void Tether::update(const Camera3D &camera, GameState &GameState,
+void Tether::update(const Camera3D& camera,
+                    GameState& GameState,
                     vec3 playerPos) {
   // Get mouse position
   if (GameState.itemActive == 0) {
@@ -49,9 +50,14 @@ void Tether::update(const Camera3D &camera, GameState &GameState,
   model.transform = MatrixTranslate(pos.x, pos.y, pos.z);
 }
 
-void Tether::draw() { DrawModel(model, Vector3Zero(), 1.0f, GRAY); }
+void Tether::draw() {
+  DrawModel(model, Vector3Zero(), 1.0f, GRAY);
+}
 
-Rope::Rope(vec3 playerPos, vec3 tetherPos, float thickness, int num_points,
+Rope::Rope(vec3 playerPos,
+           vec3 tetherPos,
+           float thickness,
+           int num_points,
            float constraint)
     : start(tetherPos),
       end(playerPos),
@@ -142,7 +148,7 @@ void Rope::update(vec3 playerPos, vec3 tetherPos, float dt) {
 void Rope::draw() {
   for (int i = 0; i < num_points - 1; i++) {
     vec3 segment_dir = points[i + 1] - points[i];
-    vec3 midpoint = points[i] + segment_dir * 0.75f;
+    vec3 midpoint = points[i] + segment_dir * 0.6f;
     DrawCylinderEx(points[i], midpoint, thickness, thickness, sides, color);
   }
 }
